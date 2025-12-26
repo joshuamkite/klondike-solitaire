@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Victory Animation Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #1e5631 0%, #2d7a4a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button {
+            padding: 20px 40px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 500;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #357abd;
+        }
+
+        .victory-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+            cursor: pointer;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        .victory-content {
+            position: relative;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .victory-title {
+            font-size: 80px;
+            font-weight: bold;
+            color: gold;
+            text-shadow:
+                0 0 20px rgba(255, 215, 0, 0.8),
+                0 0 40px rgba(255, 215, 0, 0.6),
+                0 0 60px rgba(255, 215, 0, 0.4),
+                2px 2px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+            animation: titleAppear 1s ease-out;
+        }
+
+        @keyframes titleAppear {
+            0% {
+                transform: scale(0.5) translateY(-50px);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.1) translateY(0);
+            }
+
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .victory-subtitle {
+            font-size: 32px;
+            color: white;
+            margin-bottom: 40px;
+            animation: subtitleAppear 1s ease-out 0.3s backwards;
+        }
+
+        @keyframes subtitleAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .victory-hint {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            animation: hintPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes hintPulse {
+
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+
+            50% {
+                opacity: 1;
+            }
+        }
+
+        .particles {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            font-size: 52px;
+            font-weight: bold;
+            animation: fireworkBurst 2.5s ease-out forwards;
+            opacity: 0;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .particle.suit-red {
+            color: #ff1744;
+        }
+
+        .particle.suit-black {
+            color: #333;
+        }
+
+        @keyframes fireworkBurst {
+            0% {
+                transform: translate(-50%, -50%) scale(0.3) rotate(0deg);
+                opacity: 0;
+            }
+
+            10% {
+                opacity: 1;
+            }
+
+            20% {
+                transform: translate(calc(var(--dx) * 0.5px), calc(var(--dy) * 0.5px)) scale(1) rotate(calc(var(--rotation) * 0.3));
+                opacity: 1;
+            }
+
+            50% {
+                transform: translate(calc(var(--dx) * 1px), calc(var(--dy) * 1px)) scale(1.2) rotate(calc(var(--rotation) * 0.7));
+                opacity: 1;
+            }
+
+            100% {
+                transform: translate(calc(var(--dx) * 1.5px), calc(var(--dy) * 1.5px)) scale(0.5) rotate(var(--rotation));
+                opacity: 0;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <button id="showVictory">Show Victory Animation</button>
+
+    <div id="victoryOverlay" class="victory-overlay hidden">
+        <div class="victory-content">
+            <h1 class="victory-title">Congratulations!</h1>
+            <p class="victory-subtitle">You Won!</p>
+            <div class="particles" id="particles"></div>
+            <p class="victory-hint">Click anywhere to continue</p>
+        </div>
+    </div>
+
+    <script>
+        const suits = ['♥', '♦', '♣', '♠'];
+        const particlesContainer = document.getElementById('particles');
+        const victoryOverlay = document.getElementById('victoryOverlay');
+        const showButton = document.getElementById('showVictory');
+
+        // Create particles
+        for (let i = 0; i < 60; i++) {
+            const particle = document.createElement('div');
+            const suit = suits[i % 4];
+            const angle = (i * 360 / 60) + (Math.random() * 20 - 10);
+            const velocity = 150 + Math.random() * 100;
+            const rotation = Math.random() * 720 - 360;
+            const delay = Math.random() * 0.3;
+
+            const radians = (angle * Math.PI) / 180;
+            const dx = Math.cos(radians) * velocity;
+            const dy = Math.sin(radians) * velocity;
+
+            particle.className = `particle suit-${(suit === '♥' || suit === '♦') ? 'red' : 'black'}`;
+            particle.textContent = suit;
+            particle.style.setProperty('--dx', dx);
+            particle.style.setProperty('--dy', dy);
+            particle.style.setProperty('--rotation', `${rotation}deg`);
+            particle.style.animationDelay = `${delay}s`;
+
+            particlesContainer.appendChild(particle);
+        }
+
+        showButton.addEventListener('click', () => {
+            victoryOverlay.classList.remove('hidden');
+        });
+
+        victoryOverlay.addEventListener('click', () => {
+            victoryOverlay.classList.add('hidden');
+        });
+    </script>
+</body>
+
+</html>

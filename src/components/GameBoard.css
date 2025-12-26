@@ -1,0 +1,301 @@
+.game-board {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1e5631 0%, #2d7a4a 100%);
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+}
+
+.game-header {
+    max-width: 1200px;
+    margin: 0 auto 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 15px 25px;
+    border-radius: 8px;
+    backdrop-filter: blur(10px);
+    gap: 20px;
+}
+
+.game-header h1 {
+    color: white;
+    margin: 0;
+    font-size: 32px;
+    font-weight: 600;
+}
+
+.game-stats {
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+}
+
+.game-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 6px 12px;
+    border-radius: 6px;
+}
+
+.control-group>label:first-child {
+    color: white;
+    font-weight: 500;
+    font-size: 14px;
+    margin-right: 4px;
+}
+
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.toggle-switch span {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.toggle-switch span.active {
+    color: white;
+}
+
+/* Toggle Switch Slider */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: 0.3s;
+    border-radius: 24px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+}
+
+input:checked+.slider {
+    background-color: #4a90e2;
+}
+
+input:checked+.slider:before {
+    transform: translateX(20px);
+}
+
+.slider:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+}
+
+input:checked+.slider:hover {
+    background-color: #357abd;
+}
+
+.game-controls button {
+    padding: 8px 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.2s;
+}
+
+.game-controls button:hover:not(:disabled) {
+    background: #357abd;
+}
+
+.game-controls button:disabled {
+    background: #6b6b6b;
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+.game-area {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.top-area {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 40px;
+    align-items: flex-start;
+}
+
+.stock-waste {
+    display: flex;
+    gap: 10px;
+}
+
+.cell {
+    cursor: pointer;
+}
+
+.stock {
+    position: relative;
+}
+
+.empty-stock {
+    font-size: 48px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.foundations {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.foundation {
+    position: relative;
+}
+
+/* Foundation suit indicators */
+.foundation-hearts .card-placeholder::after,
+.foundation-diamonds .card-placeholder::after,
+.foundation-clubs .card-placeholder::after,
+.foundation-spades .card-placeholder::after {
+    font-size: 32px;
+    opacity: 0.3;
+}
+
+.foundation-hearts .card-placeholder::after {
+    content: '♥';
+    color: #d32f2f;
+}
+
+.foundation-diamonds .card-placeholder::after {
+    content: '♦';
+    color: #d32f2f;
+}
+
+.foundation-clubs .card-placeholder::after {
+    content: '♣';
+    color: #1a1a1a;
+}
+
+.foundation-spades .card-placeholder::after {
+    content: '♠';
+    color: #1a1a1a;
+}
+
+.tableau {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+
+.tableau-column {
+    min-height: 500px;
+}
+
+.column-drop-zone {
+    min-height: 500px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.column-drop-zone:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* Footer */
+.game-footer {
+    max-width: 1200px;
+    margin: 40px auto 0;
+    padding: 20px;
+    text-align: center;
+}
+
+.game-footer p {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 14px;
+    margin: 0;
+}
+
+.game-footer a {
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.game-footer a:hover {
+    color: #ffffff;
+    text-decoration: underline;
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+    .tableau {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .game-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .game-controls {
+        flex-wrap: wrap;
+    }
+
+    .top-area {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .tableau {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .tableau {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
