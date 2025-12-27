@@ -1,0 +1,1 @@
+Fix cards animations - flashing to destination, dragging only a single card from a stack
