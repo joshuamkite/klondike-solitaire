@@ -3,6 +3,7 @@ import type { GameState } from '../types/gameState';
 import type { Card as CardType } from '../types/card';
 import { Card } from './Card';
 import { VictoryAnimation } from './VictoryAnimation';
+import { LicenseModal } from './LicenseModal';
 import {
     initializeGame,
     drawFromStock,
@@ -50,6 +51,7 @@ function gameReducer(state: GameReducerState, action: GameAction): GameReducerSt
 export function GameBoard() {
     const [deckCount, setDeckCount] = useState<1 | 2>(1);
     const [drawCount, setDrawCount] = useState<1 | 3>(1);
+    const [showLicense, setShowLicense] = useState(false);
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -671,25 +673,35 @@ export function GameBoard() {
             )}
 
             <footer className="game-footer">
-                <p>
+                <div className="footer-buttons">
                     <a
                         href="https://www.joshuakite.co.uk/"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="footer-button"
                     >
-                        Visit my website
+                        Visit my Website
                     </a>
-                    {' '} | Card images by Byron Knoll,{' '}
+                    <button
+                        onClick={() => setShowLicense(true)}
+                        className="footer-button"
+                    >
+                        View Licences
+                    </button>
                     <a
-                        href="https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards"
+                        href="https://github.com/joshuamkite/klondike-solitaire"
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="footer-button"
                     >
-                        Wikimedia Commons
+                        View Source
                     </a>
-                    {' '}(Public Domain)
-                </p>
+                </div>
             </footer>
+
+            {showLicense && (
+                <LicenseModal onClose={() => setShowLicense(false)} />
+            )}
         </div>
     );
 }

@@ -323,21 +323,31 @@ input:checked+.slider:hover {
     text-align: center;
 }
 
-.game-footer p {
-    color: rgba(255, 255, 255, 0.7);
+.footer-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.footer-button {
+    padding: 8px 16px;
+    background: #4a90e2;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
     font-size: 14px;
-    margin: 0;
-}
-
-.game-footer a {
-    color: rgba(255, 255, 255, 0.9);
+    font-weight: 500;
+    transition: background 0.2s;
     text-decoration: none;
-    transition: color 0.2s;
+    display: inline-block;
+    font-family: inherit;
 }
 
-.game-footer a:hover {
-    color: #ffffff;
-    text-decoration: underline;
+.footer-button:hover {
+    background: #357abd;
+    text-decoration: none;
 }
 
 /* Responsive design for mobile devices */
@@ -405,8 +415,13 @@ input:checked+.slider:hover {
         max-width: 100%;
     }
 
-    .game-footer p {
-        font-size: 12px;
+    .footer-buttons {
+        gap: 10px;
+    }
+
+    .footer-button {
+        padding: 6px 12px;
+        font-size: 13px;
     }
 }
 
@@ -490,8 +505,9 @@ input:checked+.slider:hover {
         padding: 10px;
     }
 
-    .game-footer p {
-        font-size: 10px;
+    .footer-button {
+        padding: 5px 10px;
+        font-size: 11px;
     }
 }
 
