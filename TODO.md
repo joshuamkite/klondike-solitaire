@@ -1,2 +1,7 @@
 - [ ] Fix cards animations - flashing to destination, dragging only a single card from a stack
-- [ ] Display on mobile
+- [x] Display on mobile
+- [ ] Fix animations
+- [x] Have victory flower burst repeat and stay on screen
+- [x] Fix undo shows unselectable card
+- [x] Don't need dotted outlines on empty fields 
+- [x] Have home cells badged by suit 
