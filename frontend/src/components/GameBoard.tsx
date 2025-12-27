@@ -115,9 +115,11 @@ export function GameBoard() {
 
             const boardPadding = window.innerWidth < 768 ? 10 : 20;
 
-            // Use 80% of viewport width
+            // Desktop game width: Change this value to adjust game width (0.6 = 60%, 0.7 = 70%, 0.8 = 80%)
+            const gameWidthPercent = 0.7;
+
             const viewportWidth = window.innerWidth - (boardPadding * 2);
-            const availableWidth = viewportWidth * 0.8;
+            const availableWidth = viewportWidth * gameWidthPercent;
 
             // Gap between cards
             const cardGap = 10;
@@ -141,7 +143,7 @@ export function GameBoard() {
             gameBoardRef.current.style.setProperty('--card-height', `${cardHeight}px`);
             gameBoardRef.current.style.setProperty('--card-gap', `${cardGap}px`);
             gameBoardRef.current.style.setProperty('--board-padding', `${boardPadding}px`);
-            gameBoardRef.current.style.setProperty('--max-game-width', `80%`);
+            gameBoardRef.current.style.setProperty('--max-game-width', `${gameWidthPercent * 100}%`);
         };
 
         calculateCardDimensions();

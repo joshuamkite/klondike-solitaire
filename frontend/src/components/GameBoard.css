@@ -7,7 +7,8 @@
     --card-height: 140px;
     --card-gap: 10px;
     --board-padding: 20px;
-    --max-game-width: 80%;
+    /* Desktop game width: This is overwritten by JavaScript. Adjust 'gameWidthPercent' in GameBoard.tsx instead. */
+    --max-game-width: 70%;
 }
 
 .game-header {
