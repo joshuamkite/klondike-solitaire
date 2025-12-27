@@ -49,6 +49,8 @@ function gameReducer(state: GameReducerState, action: GameAction): GameReducerSt
 export function GameBoard() {
     const [deckCount, setDeckCount] = useState<1 | 2>(1);
     const [drawCount, setDrawCount] = useState<1 | 3>(3);
+    const gameBoardRef = useRef<HTMLDivElement>(null);
+    const gameAreaRef = useRef<HTMLDivElement>(null);
 
     const [gameReducerState, dispatch] = useReducer(gameReducer, {
         current: initializeGame(deckCount, drawCount),
@@ -105,6 +107,53 @@ export function GameBoard() {
     };
 
     const autoCompleteTimeoutRef = useRef<number | null>(null);
+
+    // Calculate and set card dimensions based on game area width
+    useEffect(() => {
+        const calculateCardDimensions = () => {
+            if (!gameBoardRef.current || !gameAreaRef.current) return;
+
+            const boardPadding = window.innerWidth < 768 ? 10 : 20;
+
+            // Use 80% of viewport width
+            const viewportWidth = window.innerWidth - (boardPadding * 2);
+            const availableWidth = viewportWidth * 0.8;
+
+            // Gap between cards
+            const cardGap = 10;
+
+            // Tableau: 7 columns + 6 gaps
+            const tableauItems = 7;
+            const tableauGaps = 6;
+
+            // Calculate card width to fill available space
+            let cardWidth = (availableWidth - (tableauGaps * cardGap)) / tableauItems;
+
+            // Set reasonable bounds (minimum 60px)
+            const minWidth = 60;
+            cardWidth = Math.max(minWidth, cardWidth);
+
+            // Maintain 5:7 aspect ratio (width:height)
+            const cardHeight = cardWidth * 1.4;
+
+            // Set CSS custom properties
+            gameBoardRef.current.style.setProperty('--card-width', `${cardWidth}px`);
+            gameBoardRef.current.style.setProperty('--card-height', `${cardHeight}px`);
+            gameBoardRef.current.style.setProperty('--card-gap', `${cardGap}px`);
+            gameBoardRef.current.style.setProperty('--board-padding', `${boardPadding}px`);
+            gameBoardRef.current.style.setProperty('--max-game-width', `80%`);
+        };
+
+        calculateCardDimensions();
+
+        // Recalculate on window resize
+        const handleResize = () => {
+            calculateCardDimensions();
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, [deckCount]);
 
     // Autocomplete: When stock and waste are empty and all cards are face-up,
     // automatically move cards to foundations
@@ -386,7 +435,7 @@ export function GameBoard() {
     };
 
     return (
-        <div className="game-board">
+        <div className="game-board" ref={gameBoardRef}>
             <div className="game-header">
                 <h1>Klondike Solitaire</h1>
 
@@ -435,7 +484,7 @@ export function GameBoard() {
                 </div>
             </div>
 
-            <div className="game-area">
+            <div className="game-area" ref={gameAreaRef}>
                 {/* Top Area: Stock/Waste and Foundations */}
                 <div className="top-area">
                     <div className="stock-waste">
@@ -474,7 +523,7 @@ export function GameBoard() {
                     </div>
 
                     {/* Foundations */}
-                    <div className="foundations">
+                    <div className={`foundations ${deckCount === 2 ? 'two-deck' : ''}`}>
                         {gameState.foundations.map((foundation, index) => {
                             const topCard = foundation[foundation.length - 1];
                             const suits = ['hearts', 'diamonds', 'clubs', 'spades', 'hearts', 'diamonds', 'clubs', 'spades'];
@@ -526,7 +575,9 @@ export function GameBoard() {
                                             onClick={() => handleTableauCardClick(columnIndex, cardIndex)}
                                             onDoubleClick={() => cardIndex === column.length - 1 && handleTableauDoubleClick(columnIndex)}
                                             className={isCardSelected(card) ? 'selected' : ''}
-                                            style={{ marginTop: cardIndex === 0 ? '0' : '-110px' }}
+                                            style={{
+                                                marginTop: cardIndex === 0 ? '0' : `calc(var(--card-height, 140px) * -0.893)`
+                                            }}
                                             draggable={card.faceUp}
                                             onDragStart={(e) => handleDragStart(e, 'tableau', columnIndex, cardIndex)}
                                             onDragEnd={handleDragEnd}
