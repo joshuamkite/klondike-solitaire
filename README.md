@@ -5,13 +5,14 @@ A React TypeScript implementation of the classic Klondike solitaire card game, d
 ## Features
 
 - **Classic Klondike Rules**: 7-column tableau layout with traditional gameplay
-- **Multiple Game Modes**: 
+- **Multiple Game Modes**:
   - 1 or 2 deck modes
   - Draw 1 or 3 cards from stock
 - **Intuitive Controls**:
   - Drag-and-drop card movement
   - Click-to-select and click-to-move
   - Double-click to auto-move cards to foundations
+- **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices
 - **Smart Foundation Placement**: Cards automatically go to the correct foundation when dropped
 - **Multi-card Selection**: Visual highlighting of entire card sequences
 - **Undo Functionality**: Step back through move history

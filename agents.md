@@ -26,16 +26,20 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 2. **Game Modes**:
    - 1 or 2 deck modes
    - Draw 1 or 3 cards from stock
-3. **Card Images**: SVG card images from Wikimedia Commons (Byron Knoll, Public Domain)
-4. **Interaction Methods**:
+3. **Responsive Design**: Fully optimized for mobile, tablet, and desktop
+   - Dynamic card sizing to fit all columns on any screen size
+   - Touch-friendly interactions for mobile devices
+   - Landscape and portrait orientation support
+4. **Card Images**: SVG card images from Wikimedia Commons (Byron Knoll, Public Domain)
+5. **Interaction Methods**:
    - Drag-and-drop card movement
    - Click-to-select and click-to-move
    - Double-click to auto-move to foundations
-5. **Smart Foundation Drops**: Cards automatically go to the correct foundation
-6. **Multi-card Selection**: Visual highlighting of entire card sequences
-7. **Undo Functionality**: Step back through move history
-8. **Victory Animation**: Fireworks celebration with card suit particles
-9. **Move Counter**: Tracks number of moves made
+6. **Smart Foundation Drops**: Cards automatically go to the correct foundation
+7. **Multi-card Selection**: Visual highlighting of entire card sequences
+8. **Undo Functionality**: Step back through move history
+9. **Victory Animation**: Fireworks celebration with card suit particles
+10. **Move Counter**: Tracks number of moves made
 
 ## Development Commands
 - `bun install` - Install dependencies
