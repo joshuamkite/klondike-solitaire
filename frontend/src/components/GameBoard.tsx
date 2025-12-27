@@ -48,7 +48,7 @@ function gameReducer(state: GameReducerState, action: GameAction): GameReducerSt
 
 export function GameBoard() {
     const [deckCount, setDeckCount] = useState<1 | 2>(1);
-    const [drawCount, setDrawCount] = useState<1 | 3>(3);
+    const [drawCount, setDrawCount] = useState<1 | 3>(1);
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
 
