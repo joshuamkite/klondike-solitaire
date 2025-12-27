@@ -74,7 +74,21 @@
                 0 0 60px rgba(255, 215, 0, 0.4),
                 2px 2px 4px rgba(0, 0, 0, 0.5);
             margin-bottom: 20px;
-            animation: titleAppear 1s ease-out;
+            animation: titleAppear 1s ease-out, bringToFront 6.25s step-end forwards;
+            position: relative;
+            z-index: 1;
+        }
+
+        @keyframes bringToFront {
+
+            0%,
+            99.9% {
+                z-index: 1;
+            }
+
+            100% {
+                z-index: 10;
+            }
         }
 
         @keyframes titleAppear {
@@ -147,7 +161,7 @@
             position: absolute;
             font-size: 52px;
             font-weight: bold;
-            animation: fireworkBurst 2.5s ease-out forwards;
+            animation: fireworkBurst 2.5s ease-out 2.5 forwards;
             opacity: 0;
             filter: drop-shadow(0 0 8px currentColor);
         }
