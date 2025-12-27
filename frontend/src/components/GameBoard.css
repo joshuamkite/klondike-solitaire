@@ -202,29 +202,34 @@ input:checked+.slider:hover {
     grid-row: 1;
 }
 
-/* Two-deck mode: 5-8 in second row with 2/3 overlap */
+/* Two-deck mode: 5-8 in second row with same overlap as tableau
+   Foundation overlap: -0.75 = 75% overlap. Adjust value between 0 (no overlap) and -1 (100% overlap) */
 .foundations.two-deck .foundation:nth-child(5) {
     grid-column: 4;
     grid-row: 2;
-    margin-top: calc(var(--card-height, 140px) * -0.667);
+    margin-top: calc(var(--card-height, 140px) * -0.75);
+    /* Foundation row 2 overlap */
 }
 
 .foundations.two-deck .foundation:nth-child(6) {
     grid-column: 5;
     grid-row: 2;
-    margin-top: calc(var(--card-height, 140px) * -0.667);
+    margin-top: calc(var(--card-height, 140px) * -0.75);
+    /* Foundation row 2 overlap */
 }
 
 .foundations.two-deck .foundation:nth-child(7) {
     grid-column: 6;
     grid-row: 2;
-    margin-top: calc(var(--card-height, 140px) * -0.667);
+    margin-top: calc(var(--card-height, 140px) * -0.75);
+    /* Foundation row 2 overlap */
 }
 
 .foundations.two-deck .foundation:nth-child(8) {
     grid-column: 7;
     grid-row: 2;
-    margin-top: calc(var(--card-height, 140px) * -0.667);
+    margin-top: calc(var(--card-height, 140px) * -0.75);
+    /* Foundation row 2 overlap */
 }
 
 
@@ -247,35 +252,6 @@ input:checked+.slider:hover {
 
 .foundation {
     position: relative;
-}
-
-/* Foundation suit indicators */
-.foundation-hearts .card-placeholder::after,
-.foundation-diamonds .card-placeholder::after,
-.foundation-clubs .card-placeholder::after,
-.foundation-spades .card-placeholder::after {
-    font-size: calc(var(--card-width, 100px) * 0.32);
-    opacity: 0.3;
-}
-
-.foundation-hearts .card-placeholder::after {
-    content: '♥';
-    color: #d32f2f;
-}
-
-.foundation-diamonds .card-placeholder::after {
-    content: '♦';
-    color: #d32f2f;
-}
-
-.foundation-clubs .card-placeholder::after {
-    content: '♣';
-    color: #1a1a1a;
-}
-
-.foundation-spades .card-placeholder::after {
-    content: '♠';
-    color: #1a1a1a;
 }
 
 .tableau {

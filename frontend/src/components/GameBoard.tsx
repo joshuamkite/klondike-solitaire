@@ -576,7 +576,8 @@ export function GameBoard() {
                                             onDoubleClick={() => cardIndex === column.length - 1 && handleTableauDoubleClick(columnIndex)}
                                             className={isCardSelected(card) ? 'selected' : ''}
                                             style={{
-                                                marginTop: cardIndex === 0 ? '0' : `calc(var(--card-height, 140px) * -0.893)`
+                                                // Tableau card overlap: -0.75 = 75% overlap. Adjust value between 0 (no overlap) and -1 (100% overlap)
+                                                marginTop: cardIndex === 0 ? '0' : `calc(var(--card-height, 140px) * -0.75)`
                                             }}
                                             draggable={card.faceUp}
                                             onDragStart={(e) => handleDragStart(e, 'tableau', columnIndex, cardIndex)}
