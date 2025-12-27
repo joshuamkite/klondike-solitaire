@@ -9,6 +9,7 @@ import {
     moveCards,
     autoMoveToFoundation,
     findFoundationForCard,
+    autoPlay,
 } from '../game/klondikeLogic';
 import './GameBoard.css';
 
@@ -104,6 +105,14 @@ export function GameBoard() {
     const undo = () => {
         dispatch({ type: 'UNDO' });
         setSelectedCard(null);
+    };
+
+    const handleAutoPlay = () => {
+        const newState = autoPlay(gameState);
+        if (newState !== gameState) {
+            updateGameState(newState);
+            setSelectedCard(null);
+        }
     };
 
     const autoCompleteTimeoutRef = useRef<number | null>(null);
@@ -448,6 +457,10 @@ export function GameBoard() {
                 <div className="game-controls">
                     <button onClick={undo} disabled={history.length === 0}>
                         Undo
+                    </button>
+
+                    <button onClick={handleAutoPlay}>
+                        Auto Play
                     </button>
 
                     <div className="control-group">

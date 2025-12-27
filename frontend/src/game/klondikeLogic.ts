@@ -298,3 +298,85 @@ export function autoMoveToFoundation(state: GameState, fromPile: 'tableau' | 'wa
 
     return null;
 }
+
+// Get the minimum rank value currently in foundations for a given color
+function getMinFoundationRankForColor(foundations: Card[][], isRedCard: boolean): number {
+    let minRank = 14; // King value + 1
+
+    for (const foundation of foundations) {
+        if (foundation.length === 0) continue;
+
+        const topCard = foundation[foundation.length - 1];
+        if (isRed(topCard.suit) === isRedCard) {
+            const rankValue = getRankValue(topCard.rank);
+            minRank = Math.min(minRank, rankValue);
+        }
+    }
+
+    return minRank === 14 ? 0 : minRank;
+}
+
+// Check if a card can be safely auto-moved to foundation
+// A card is safe to move if the cards that could be placed on it are already in foundations
+function isSafeToAutoMove(card: Card, foundations: Card[][]): boolean {
+    const cardValue = getRankValue(card.rank);
+
+    // Aces and 2s are always safe
+    if (cardValue <= 2) return true;
+
+    // For other cards, check if opposite-color cards 2 ranks lower are in foundations
+    // This is a conservative strategy to avoid blocking gameplay
+    const isCardRed = isRed(card.suit);
+    const minOppositeColorRank = getMinFoundationRankForColor(foundations, !isCardRed);
+
+    // Safe if opposite color foundations are at least 2 behind
+    return minOppositeColorRank >= cardValue - 2;
+}
+
+// Auto-play: automatically move safe cards to foundations
+export function autoPlay(state: GameState): GameState {
+    let currentState = state;
+    let madeMove = true;
+
+    // Keep trying to move cards until no more moves are possible
+    while (madeMove) {
+        madeMove = false;
+
+        // Try to move from waste
+        if (currentState.waste.length > 0) {
+            const card = currentState.waste[currentState.waste.length - 1];
+            const foundationIndex = findFoundationForCard(card, currentState.foundations);
+
+            if (foundationIndex !== null && isSafeToAutoMove(card, currentState.foundations)) {
+                const newState = moveCards(currentState, 'waste', 0, currentState.waste.length - 1, 'foundation', foundationIndex);
+                if (newState) {
+                    currentState = newState;
+                    madeMove = true;
+                    continue;
+                }
+            }
+        }
+
+        // Try to move from each tableau column
+        for (let columnIndex = 0; columnIndex < currentState.tableau.length; columnIndex++) {
+            const column = currentState.tableau[columnIndex];
+            if (column.length === 0) continue;
+
+            const card = column[column.length - 1];
+            if (!card.faceUp) continue;
+
+            const foundationIndex = findFoundationForCard(card, currentState.foundations);
+
+            if (foundationIndex !== null && isSafeToAutoMove(card, currentState.foundations)) {
+                const newState = moveCards(currentState, 'tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
+                if (newState) {
+                    currentState = newState;
+                    madeMove = true;
+                    break; // Start over to check waste and tableau from beginning
+                }
+            }
+        }
+    }
+
+    return currentState;
+}
