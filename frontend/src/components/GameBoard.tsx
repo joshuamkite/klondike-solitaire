@@ -116,7 +116,7 @@ export function GameBoard() {
             const boardPadding = window.innerWidth < 768 ? 10 : 20;
 
             // Desktop game width: Change this value to adjust game width (0.6 = 60%, 0.7 = 70%, 0.8 = 80%)
-            const gameWidthPercent = 0.7;
+            const gameWidthPercent = 0.65;
 
             const viewportWidth = window.innerWidth - (boardPadding * 2);
             const availableWidth = viewportWidth * gameWidthPercent;
