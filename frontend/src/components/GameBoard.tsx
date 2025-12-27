@@ -358,6 +358,7 @@ export function GameBoard() {
         cardIndex: number
     ) => {
         setDraggedCard({ fromPile, fromIndex, cardIndex });
+        setSelectedCard(null); // Clear click-based selection when dragging
         e.dataTransfer.effectAllowed = 'move';
     };
 
