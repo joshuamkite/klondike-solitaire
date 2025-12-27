@@ -26,11 +26,11 @@ export function isBlack(suit: Suit): boolean {
 }
 
 export function getCardImagePath(card: Card): string {
-    return `/src/assets/cards/English_pattern_${card.rank}_of_${card.suit}.svg`;
+    return `/cards/English_pattern_${card.rank}_of_${card.suit}.svg`;
 }
 
 export function getCardBackImagePath(deckNumber: 1 | 2 = 1): string {
     return deckNumber === 1
-        ? '/src/assets/cards/card-back-blue.svg'
-        : '/src/assets/cards/card-back-red.svg';
+        ? '/cards/card-back-blue.svg'
+        : '/cards/card-back-red.svg';
 }

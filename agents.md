@@ -10,12 +10,15 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 
 ## Project Structure
 ```
-/src
-  /components      - React components (Card, GameBoard, VictoryAnimation)
-  /game           - Game logic, state management, and rules
-  /assets/cards   - SVG card images from Wikimedia Commons
-  /types          - TypeScript type definitions
+/frontend
+  /src
+    /components      - React components (Card, GameBoard, VictoryAnimation)
+    /game           - Game logic, state management, and rules
+    /types          - TypeScript type definitions
+  /public
+    /cards          - SVG card images from Wikimedia Commons
 /dev_tooling/download_cards - Go script to download card images
+/terraform          - Infrastructure as Code for AWS deployment
 ```
 
 ## Key Features

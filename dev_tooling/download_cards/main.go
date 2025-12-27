@@ -110,7 +110,7 @@ func downloadFile(url, filepath string) error {
 
 func main() {
 	// Create directory to save images
-	dir := "../../src/assets/cards"
+	dir := "../../frontend/public/cards"
 	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
 		fmt.Println("Error creating directory:", err)
 		return
