@@ -2,6 +2,37 @@
 
 A React TypeScript implementation of the classic Klondike solitaire card game, deployed as a static website on AWS.
 
+![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat&logo=typescript)
+![Bun](https://img.shields.io/badge/Bun-1.1.26-000000?style=flat&logo=bun)
+![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?style=flat&logo=vite)
+![OpenTofu](https://img.shields.io/badge/OpenTofu-1.10+-FFDA18?style=flat&logo=opentofu&logoColor=000000)
+
+- [Klondike Solitaire](#klondike-solitaire)
+  - [Features](#features)
+  - [Technology Stack](#technology-stack)
+  - [Project Structure](#project-structure)
+  - [Local Development](#local-development)
+    - [Prerequisites](#prerequisites)
+    - [Setup](#setup)
+  - [AWS Deployment](#aws-deployment)
+    - [Prerequisites](#prerequisites-1)
+    - [Deployment Steps](#deployment-steps)
+  - [How to Play](#how-to-play)
+    - [Setup](#setup-1)
+    - [Objective](#objective)
+    - [Gameplay Rules](#gameplay-rules)
+    - [Controls](#controls)
+  - [Card Images](#card-images)
+  - [Terraform Documentation](#terraform-documentation)
+  - [Requirements](#requirements)
+  - [Providers](#providers)
+  - [Modules](#modules)
+  - [Resources](#resources)
+  - [Inputs](#inputs)
+  - [Outputs](#outputs)
+
+
 ## Features
 
 - **Classic Klondike Rules**: 7-column tableau layout with traditional gameplay
@@ -9,8 +40,8 @@ A React TypeScript implementation of the classic Klondike solitaire card game, d
   - 1 or 2 deck modes
   - Draw 1 or 3 cards from stock
 - **Intuitive Controls**:
-  - Drag-and-drop card movement
-  - Click-to-select and click-to-move
+  - Drag-and-drop card movement (Desktop)
+  - Click-to-select and click-to-move (Desktop and mobile)
   - Double-click to auto-move cards to foundations
 - **Responsive Design**: Fully optimized for mobile, tablet, and desktop devices
 - **Smart Foundation Placement**: Cards automatically go to the correct foundation when dropped
@@ -67,15 +98,6 @@ bun dev
 
 The game will be available at http://localhost:5173
 
-### Build Commands
-
-```bash
-cd frontend
-bun dev      # Start development server
-bun build    # Build for production
-bun preview  # Preview production build
-```
-
 ## AWS Deployment
 
 The game is deployed to AWS using Terraform/OpenTofu with:
@@ -84,61 +106,45 @@ The game is deployed to AWS using Terraform/OpenTofu with:
 - **ACM**: SSL/TLS certificates
 - **Route53**: DNS management
 
+The frontend will be automatically built and deployed to S3, with CloudFront distribution created and cache invalidated
+
+
 ### Prerequisites
 
 - AWS CLI configured
 - Terraform/OpenTofu installed
 - Route53 hosted zone for your domain
+- Bun installed 
 
 ### Deployment Steps
 
-1. Navigate to terraform directory:
-```bash
-cd terraform
-```
-
-2. Create a `terraform.tfvars` file with your configuration:
-```hcl
-aws_region              = "eu-west-2"
-environment             = "prod"
-frontend_domain_name    = "klondike.yourdomain.com"
-hosted_zone_name        = "yourdomain.com"
-backend_bucket          = "your-terraform-state-bucket"
-backend_key             = "klondike-solitaire/terraform.tfstate"
-backend_region          = "eu-west-2"
-
-default_tags = {
-  Project     = "klondike-solitaire"
-  Environment = "prod"
-  ManagedBy   = "terraform"
-}
-```
-
-3. Initialize and deploy:
-```bash
-terraform init
-terraform plan
-terraform apply
-```
-
-The frontend will be automatically built and deployed to S3, with CloudFront distribution created.
+Navigate to terraform directory, add required vars and `apply` from there
 
 ## How to Play
 
 ### Setup
-- The game deals 7 tableau columns with 1, 2, 3, 4, 5, 6, 7 cards respectively
+
+**1-Deck Mode:**
+- 52 cards dealt into 7 tableau columns (1, 2, 3, 4, 5, 6, 7 cards respectively)
 - Only the top card in each tableau column starts face-up
+- 4 empty foundations (one per suit)
 - Remaining cards go to the stock (draw pile)
-- 4 empty foundations await (8 for 2-deck mode)
+
+**2-Deck Mode:**
+- 104 cards dealt into 9 tableau columns (1, 2, 3, 4, 5, 6, 7, 8, 9 cards respectively)
+- Only the top card in each tableau column starts face-up
+- 8 empty foundations (two per suit)
+- Each deck has a different colored back (blue and red)
+- Remaining cards go to the stock (draw pile)
 
 ### Objective
-Move all cards to the foundations, building from Ace to King by suit.
+Move all cards to the foundations, building from Ace to King by suit. In 2-deck mode, each foundation holds 13 cards (Ace through King) of the same suit.
 
 ### Gameplay Rules
 
 **Tableau Moves:**
-- Cards can be moved between columns in descending rank and alternating colors
-- Multi-card sequences can be moved together
+- Cards can be moved between columns in descending rank and alternating colors (red/black)
+- Multi-card sequences can be moved together as a unit
 - Only Kings can be placed on empty columns
 
 **Stock/Waste:**
@@ -151,24 +157,34 @@ Move all cards to the foundations, building from Ace to King by suit.
 - Build up in sequence by suit (Ace → 2 → 3 ... → King)
 - Cards can be moved from foundations back to tableau if needed
 
-**Shortcuts:**
-- Double-click any card to auto-move it to the appropriate foundation
-- Drag cards to any foundation space - they'll go to the correct one
-- When stock and waste are empty and all cards are face-up, remaining cards auto-complete
+**Auto-completion:**
+- When stock and waste are empty and all cards are face-up, remaining cards automatically move to foundations
 
 ### Controls
 
-**Slider Switches:**
-- **Decks**: Toggle between 1 and 2 deck modes
-- **Draw**: Toggle between drawing 1 or 3 cards
+**Card Movement:**
+- **Drag-and-drop**: Drag cards between tableau columns, to foundations, or from waste
+- **Click-to-select**: Click a card to select it, then click destination to move
+- **Double-click**: Automatically moves card to the appropriate foundation
+
+**Smart Foundation Drops:**
+- Drop a card on any foundation space - it will automatically go to the correct foundation for that suit
+
+**Game Settings (Slider Switches):**
+- **Decks**: Toggle between 1 and 2 deck modes (starts new game)
+- **Draw**: Toggle between drawing 1 or 3 cards (starts new game)
 
 **Buttons:**
-- **Undo**: Step back one move
+- **Undo**: Step back one move (disabled when no history)
 - **New Game**: Start a fresh game with current settings
 
 ## Card Images
 
-Card images are from Wikimedia Commons by Byron Knoll and are in the Public Domain. The download script fetches all 52 card faces plus blue and red card backs.
+**Card Faces** (Public Domain): 52 card face images by Byron Knoll from the [SVG English pattern playing cards collection](https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards) on Wikimedia Commons.
+
+**Card Backs** (CC BY-SA 3.0): Blue and red card back designs from Wikimedia Commons ([Reverso baraja española](https://commons.wikimedia.org/wiki/File:Reverso_baraja_espa%C3%B1ola.svg) and [rojo variant](https://commons.wikimedia.org/wiki/File:Reverso_baraja_espa%C3%B1ola_rojo.svg)).
+
+The download script in [`dev_tooling/download_cards`](dev_tooling/download_cards) fetches all images automatically.
 
 ## Terraform Documentation
 
@@ -228,6 +244,3 @@ Card images are from Wikimedia Commons by Byron Knoll and are in the Public Doma
 | <a name="output_website_url"></a> [website\_url](#output\_website\_url) | Website URL |
 <!-- END_TF_DOCS -->
 
-## License
-
-Card images by Byron Knoll, from [Wikimedia Commons](https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards) (Public Domain)
