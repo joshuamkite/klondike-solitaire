@@ -599,7 +599,14 @@ export function GameBoard() {
 
             <footer className="game-footer">
                 <p>
-                    Card images by Byron Knoll,{' '}
+                    <a
+                        href="https://www.joshuakite.co.uk/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        Visit my website
+                    </a>
+                    {' '} | Card images by Byron Knoll,{' '}
                     <a
                         href="https://commons.wikimedia.org/wiki/Category:SVG_English_pattern_playing_cards"
                         target="_blank"
