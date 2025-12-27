@@ -1,7 +1,7 @@
 import type { Card } from './card';
 
 export interface GameState {
-    tableau: Card[][]; // 7 columns
+    tableau: Card[][]; // 7 columns for 1 deck, 9 columns for 2 decks
     foundations: Card[][]; // 4 or 8 foundations depending on deck count
     stock: Card[]; // Draw pile
     waste: Card[]; // Waste pile (cards drawn from stock)

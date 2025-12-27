@@ -133,9 +133,9 @@ export function GameBoard() {
             // Gap between cards
             const cardGap = 10;
 
-            // Tableau: 7 columns + 6 gaps
-            const tableauItems = 7;
-            const tableauGaps = 6;
+            // Tableau: 7 columns for 1 deck, 9 columns for 2 decks
+            const tableauItems = deckCount === 1 ? 7 : 9;
+            const tableauGaps = tableauItems - 1;
 
             // Calculate card width to fill available space
             let cardWidth = (availableWidth - (tableauGaps * cardGap)) / tableauItems;
@@ -501,7 +501,7 @@ export function GameBoard() {
 
             <div className="game-area" ref={gameAreaRef}>
                 {/* Top Area: Stock/Waste and Foundations */}
-                <div className="top-area">
+                <div className={`top-area ${deckCount === 2 ? 'two-deck' : ''}`}>
                     <div className="stock-waste">
                         {/* Stock (draw pile) */}
                         <div
@@ -568,8 +568,8 @@ export function GameBoard() {
                     </div>
                 </div>
 
-                {/* Tableau (7 columns) */}
-                <div className="tableau">
+                {/* Tableau */}
+                <div className={`tableau ${deckCount === 2 ? 'two-deck' : ''}`}>
                     {gameState.tableau.map((column, columnIndex) => (
                         <div key={columnIndex} className="tableau-column">
                             <div

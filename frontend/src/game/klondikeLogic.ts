@@ -45,11 +45,12 @@ export function initializeGame(deckCount: 1 | 2 = 1, drawCount: 1 | 3 = 3): Game
         allCards = shuffleDeck([...deck1, ...deck2]);
     }
 
-    // Deal tableau: 7 columns with 1, 2, 3, 4, 5, 6, 7 cards respectively
-    const tableau: Card[][] = [[], [], [], [], [], [], []];
+    // Deal tableau: 7 columns for 1 deck, 9 columns for 2 decks
+    const columnCount = deckCount === 1 ? 7 : 9;
+    const tableau: Card[][] = Array(columnCount).fill(null).map(() => []);
     let deckIndex = 0;
 
-    for (let col = 0; col < 7; col++) {
+    for (let col = 0; col < columnCount; col++) {
         for (let row = 0; row <= col; row++) {
             const card = allCards[deckIndex++];
             // Only the last card in each column is face-up

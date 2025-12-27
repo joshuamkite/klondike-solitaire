@@ -22,8 +22,8 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 ```
 
 ## Key Features
-1. **Klondike Solitaire Rules**: Classic 7-column tableau layout
-2. **Game Modes**: 
+1. **Klondike Solitaire Rules**: 7-column tableau for 1 deck, 9-column tableau for 2 decks
+2. **Game Modes**:
    - 1 or 2 deck modes
    - Draw 1 or 3 cards from stock
 3. **Card Images**: SVG card images from Wikimedia Commons (Byron Knoll, Public Domain)
@@ -55,8 +55,8 @@ This downloads all 52 card face SVGs plus blue and red card backs.
 ## Klondike Solitaire Rules
 
 ### Setup
-- 52 cards (or 104 for 2-deck mode) dealt into 7 tableau columns
-- Column 1 has 1 card, column 2 has 2 cards, etc., up to column 7 with 7 cards
+- **1 deck mode**: 52 cards dealt into 7 tableau columns (1, 2, 3, 4, 5, 6, 7 cards)
+- **2 deck mode**: 104 cards dealt into 9 tableau columns (1, 2, 3, 4, 5, 6, 7, 8, 9 cards)
 - Only the top card in each tableau column is face-up initially
 - Remaining cards go to stock (draw pile)
 - 4 foundations for 1 deck, 8 foundations for 2 decks
