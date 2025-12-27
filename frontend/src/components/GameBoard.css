@@ -340,14 +340,246 @@ input:checked+.slider:hover {
     text-decoration: underline;
 }
 
-/* Responsive design - removed grid breakpoints to keep single row */
+/* Responsive design for mobile devices */
 @media (max-width: 768px) {
+    .game-board {
+        --board-padding: 8px;
+        --card-gap: 5px;
+        padding: var(--board-padding);
+        --max-game-width: 100%;
+        overflow-x: hidden;
+    }
+
     .game-header {
         flex-direction: column;
-        gap: 15px;
+        gap: 10px;
+        padding: 12px 15px;
+        margin-bottom: 15px;
+        max-width: 100%;
+    }
+
+    .game-area {
+        max-width: 100%;
+        overflow-x: hidden;
+    }
+
+    .game-header h1 {
+        font-size: 24px;
+    }
+
+    .game-stats {
+        font-size: 14px;
     }
 
     .game-controls {
         flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .control-group {
+        padding: 5px 10px;
+        font-size: 13px;
+    }
+
+    .game-controls button {
+        padding: 6px 12px;
+        font-size: 13px;
+    }
+
+    .top-area {
+        margin-bottom: calc(var(--card-gap) * 3);
+    }
+
+    .tableau-column {
+        min-height: calc(var(--card-height) * 2.5);
+    }
+
+    .column-drop-zone {
+        min-height: calc(var(--card-height) * 2.5);
+    }
+
+    .game-footer {
+        margin-top: 20px;
+        padding: 15px;
+        max-width: 100%;
+    }
+
+    .game-footer p {
+        font-size: 12px;
+    }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+    .game-board {
+        --board-padding: 5px;
+        --card-gap: 3px;
+    }
+
+    .game-header {
+        padding: 10px;
+        margin-bottom: 10px;
+        gap: 8px;
+    }
+
+    .game-header h1 {
+        font-size: 20px;
+    }
+
+    .game-stats {
+        font-size: 12px;
+    }
+
+    .control-group {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .control-group>label:first-child {
+        font-size: 11px;
+    }
+
+    .toggle-switch span {
+        font-size: 11px;
+    }
+
+    .switch {
+        width: 38px;
+        height: 20px;
+    }
+
+    .slider:before {
+        height: 14px;
+        width: 14px;
+        left: 3px;
+        bottom: 3px;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(18px);
+    }
+
+    .game-controls button {
+        padding: 5px 10px;
+        font-size: 11px;
+    }
+
+    .top-area {
+        margin-bottom: calc(var(--card-gap) * 2);
+    }
+
+    .tableau-column {
+        min-height: calc(var(--card-height) * 2);
+    }
+
+    .column-drop-zone {
+        min-height: calc(var(--card-height) * 2);
+    }
+
+    .empty-stock {
+        font-size: calc(var(--card-width) * 0.4);
+    }
+
+    .card-placeholder {
+        font-size: calc(var(--card-width) * 0.12);
+    }
+
+    .game-footer {
+        margin-top: 15px;
+        padding: 10px;
+    }
+
+    .game-footer p {
+        font-size: 10px;
+    }
+}
+
+/* Single-deck and two-deck mode responsive adjustments */
+@media (max-width: 768px) {
+
+    /* Single-deck: fit 7 columns */
+    .top-area:not(.two-deck),
+    .tableau:not(.two-deck) {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 6 * var(--card-gap)) / 7);
+        --card-height: calc(var(--card-width) * 1.4);
+    }
+
+    /* Two-deck: fit 9 columns */
+    .top-area.two-deck,
+    .tableau.two-deck {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 8 * var(--card-gap)) / 9);
+        --card-height: calc(var(--card-width) * 1.4);
+    }
+}
+
+@media (max-width: 480px) {
+
+    /* Single-deck: fit 7 columns */
+    .top-area:not(.two-deck),
+    .tableau:not(.two-deck) {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 6 * var(--card-gap)) / 7);
+        --card-height: calc(var(--card-width) * 1.4);
+    }
+
+    /* Two-deck: fit 9 columns */
+    .top-area.two-deck,
+    .tableau.two-deck {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 8 * var(--card-gap)) / 9);
+        --card-height: calc(var(--card-width) * 1.4);
+    }
+}
+
+/* Landscape orientation adjustments for mobile */
+@media (max-width: 896px) and (orientation: landscape) {
+    .game-board {
+        --board-padding: 5px;
+        --card-gap: 4px;
+    }
+
+    .game-header {
+        flex-direction: row;
+        flex-wrap: wrap;
+        padding: 8px 12px;
+        margin-bottom: 10px;
+        max-width: 100%;
+    }
+
+    .game-area {
+        max-width: 100%;
+    }
+
+    .game-header h1 {
+        font-size: 18px;
+    }
+
+    .game-stats {
+        font-size: 12px;
+    }
+
+    .tableau-column {
+        min-height: calc(var(--card-height) * 2);
+    }
+
+    .column-drop-zone {
+        min-height: calc(var(--card-height) * 2);
+    }
+
+    .game-footer {
+        max-width: 100%;
+    }
+
+    /* Single-deck: fit 7 columns */
+    .top-area:not(.two-deck),
+    .tableau:not(.two-deck) {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 6 * var(--card-gap)) / 7);
+        --card-height: calc(var(--card-width) * 1.4);
+    }
+
+    /* Two-deck: fit 9 columns */
+    .top-area.two-deck,
+    .tableau.two-deck {
+        --card-width: calc((100vw - 2 * var(--board-padding) - 8 * var(--card-gap)) / 9);
+        --card-height: calc(var(--card-width) * 1.4);
     }
 }

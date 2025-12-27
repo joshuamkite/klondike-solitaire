@@ -7,6 +7,8 @@
     border-radius: calc(var(--card-width, 100px) * 0.08);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-tap-highlight-color: transparent;
+    touch-action: none;
 }
 
 .card:hover {
@@ -17,6 +19,33 @@
 .card:active {
     transform: translateY(0);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .card:hover {
+        /* Reduce hover effects on mobile since touch doesn't have hover */
+        transform: none;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .card:active {
+        transform: scale(0.98);
+    }
+
+    .card.selected {
+        outline-width: 2px;
+        outline-offset: 1px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card.selected {
+        outline-width: 2px;
+        outline-offset: 1px;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(74, 144, 226, 0.4);
+    }
 }
 
 .card img {
