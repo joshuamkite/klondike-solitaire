@@ -165,8 +165,8 @@ export function drawFromStock(state: GameState): GameState {
         const toDraw = Math.min(state.drawCount, newState.stock.length);
         for (let i = 0; i < toDraw; i++) {
             const card = newState.stock.pop()!;
-            card.faceUp = true;
-            newState.waste.push(card);
+            // Create a new card object with faceUp: true instead of mutating
+            newState.waste.push({ ...card, faceUp: true });
         }
     }
 
@@ -175,12 +175,32 @@ export function drawFromStock(state: GameState): GameState {
 }
 
 // Find the appropriate foundation index for a card
+// Foundations are in fixed HCDS order (Hearts, Clubs, Diamonds, Spades)
+// For 2-deck mode: top row (0-3) fills first, then bottom row (4-7)
 export function findFoundationForCard(card: Card, foundations: Card[][]): number | null {
-    for (let i = 0; i < foundations.length; i++) {
-        if (canPlaceOnFoundation(card, foundations[i])) {
-            return i;
-        }
+    // Foundation order: Hearts (0), Clubs (1), Diamonds (2), Spades (3)
+    const suitOrder = ['hearts', 'clubs', 'diamonds', 'spades'] as const;
+    const baseIndex = suitOrder.indexOf(card.suit);
+
+    if (baseIndex === -1) return null;
+
+    // For 1 deck mode: just use the base index
+    if (foundations.length === 4) {
+        return canPlaceOnFoundation(card, foundations[baseIndex]) ? baseIndex : null;
     }
+
+    // For 2 deck mode: try top row first, then bottom row
+    const topRowIndex = baseIndex;
+    const bottomRowIndex = baseIndex + 4;
+
+    if (canPlaceOnFoundation(card, foundations[topRowIndex])) {
+        return topRowIndex;
+    }
+
+    if (canPlaceOnFoundation(card, foundations[bottomRowIndex])) {
+        return bottomRowIndex;
+    }
+
     return null;
 }
 

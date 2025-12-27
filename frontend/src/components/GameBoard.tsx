@@ -194,8 +194,11 @@ export function GameBoard() {
                 const column = gameState.tableau[columnIndex];
                 if (column.length === 0) continue;
 
-                // Try to move to appropriate foundation
-                for (let foundationIndex = 0; foundationIndex < 4; foundationIndex++) {
+                const card = column[column.length - 1];
+                // Find the correct foundation for this card based on suit
+                const foundationIndex = findFoundationForCard(card, gameState.foundations);
+
+                if (foundationIndex !== null) {
                     const newState = moveCards(
                         gameState,
                         'tableau',
@@ -538,12 +541,14 @@ export function GameBoard() {
                         </div>
                     </div>
 
-                    {/* Foundations */}
+                    {/* Foundations - Fixed order: HCDS (Hearts, Clubs, Diamonds, Spades) */}
                     <div className={`foundations ${deckCount === 2 ? 'two-deck' : ''}`}>
                         {gameState.foundations.map((foundation, index) => {
                             const topCard = foundation[foundation.length - 1];
-                            const suits = ['hearts', 'diamonds', 'clubs', 'spades', 'hearts', 'diamonds', 'clubs', 'spades'];
-                            const suitName = suits[index % suits.length];
+                            // Fixed suit order: HCDS (Hearts, Clubs, Diamonds, Spades)
+                            // For 2-deck mode: top row (0-3), bottom row (4-7)
+                            const suits = ['hearts', 'clubs', 'diamonds', 'spades', 'hearts', 'clubs', 'diamonds', 'spades'];
+                            const suitName = suits[index];
                             return (
                                 <div
                                     key={index}
