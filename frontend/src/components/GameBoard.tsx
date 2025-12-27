@@ -77,6 +77,14 @@ export function GameBoard() {
     };
 
     const newGame = () => {
+        // Warn if game is in progress (has moves and not won)
+        if (gameState.moves > 0 && !gameState.gameWon) {
+            const confirmed = window.confirm(
+                'Starting a new game will lose your current progress. Are you sure?'
+            );
+            if (!confirmed) return;
+        }
+
         dispatch({ type: 'NEW_GAME' });
         setSelectedCard(null);
         // Re-initialize with current deck count and draw count
@@ -86,6 +94,15 @@ export function GameBoard() {
 
     const handleDeckCountChange = (newCount: 1 | 2) => {
         if (newCount === deckCount) return;
+
+        // Warn if game is in progress (has moves and not won)
+        if (gameState.moves > 0 && !gameState.gameWon) {
+            const confirmed = window.confirm(
+                `Changing to ${newCount} deck${newCount > 1 ? 's' : ''} will start a new game and lose your current progress. Continue?`
+            );
+            if (!confirmed) return;
+        }
+
         setDeckCount(newCount);
         // Start a new game with the new deck count
         setSelectedCard(null);
@@ -95,6 +112,15 @@ export function GameBoard() {
 
     const handleDrawCountChange = (newCount: 1 | 3) => {
         if (newCount === drawCount) return;
+
+        // Warn if game is in progress (has moves and not won)
+        if (gameState.moves > 0 && !gameState.gameWon) {
+            const confirmed = window.confirm(
+                `Changing to draw ${newCount} will start a new game and lose your current progress. Continue?`
+            );
+            if (!confirmed) return;
+        }
+
         setDrawCount(newCount);
         // Start a new game with the new draw count
         setSelectedCard(null);
@@ -116,6 +142,22 @@ export function GameBoard() {
     };
 
     const autoCompleteTimeoutRef = useRef<number | null>(null);
+
+    // Warn before leaving page if game is in progress
+    useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            // Only warn if game is in progress (has moves and not won)
+            if (gameState.moves > 0 && !gameState.gameWon) {
+                e.preventDefault();
+                // Modern browsers require returnValue to be set
+                e.returnValue = '';
+                return '';
+            }
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [gameState.moves, gameState.gameWon]);
 
     // Calculate and set card dimensions based on game area width
     useEffect(() => {
@@ -259,22 +301,18 @@ export function GameBoard() {
         if (!card.faceUp) return;
 
         if (selectedCard) {
-            // Only allow moving to a column by clicking on its top card
-            const isTopCard = cardIndex === column.length - 1;
-
-            if (isTopCard) {
-                // Try to move selected card(s) here
-                const newState = moveCards(
-                    gameState,
-                    selectedCard.fromPile,
-                    selectedCard.fromIndex,
-                    selectedCard.cardIndex,
-                    'tableau',
-                    columnIndex
-                );
-                if (newState) {
-                    updateGameState(newState);
-                }
+            // Allow clicking on any card in the column to move selected cards there
+            // This is especially important for mobile where cards overlap heavily
+            const newState = moveCards(
+                gameState,
+                selectedCard.fromPile,
+                selectedCard.fromIndex,
+                selectedCard.cardIndex,
+                'tableau',
+                columnIndex
+            );
+            if (newState) {
+                updateGameState(newState);
             }
             setSelectedCard(null);
         } else {
@@ -470,7 +508,11 @@ export function GameBoard() {
                     <div className="control-group">
                         <label>Decks:</label>
                         <div className="toggle-switch">
-                            <span className={deckCount === 1 ? 'active' : ''}>1</span>
+                            <span
+                                className={deckCount === 1 ? 'active' : ''}
+                                onClick={() => handleDeckCountChange(1)}
+                                style={{ cursor: 'pointer' }}
+                            >1</span>
                             <label className="switch">
                                 <input
                                     type="checkbox"
@@ -479,14 +521,22 @@ export function GameBoard() {
                                 />
                                 <span className="slider"></span>
                             </label>
-                            <span className={deckCount === 2 ? 'active' : ''}>2</span>
+                            <span
+                                className={deckCount === 2 ? 'active' : ''}
+                                onClick={() => handleDeckCountChange(2)}
+                                style={{ cursor: 'pointer' }}
+                            >2</span>
                         </div>
                     </div>
 
                     <div className="control-group">
                         <label>Draw:</label>
                         <div className="toggle-switch">
-                            <span className={drawCount === 1 ? 'active' : ''}>1</span>
+                            <span
+                                className={drawCount === 1 ? 'active' : ''}
+                                onClick={() => handleDrawCountChange(1)}
+                                style={{ cursor: 'pointer' }}
+                            >1</span>
                             <label className="switch">
                                 <input
                                     type="checkbox"
@@ -495,7 +545,11 @@ export function GameBoard() {
                                 />
                                 <span className="slider"></span>
                             </label>
-                            <span className={drawCount === 3 ? 'active' : ''}>3</span>
+                            <span
+                                className={drawCount === 3 ? 'active' : ''}
+                                onClick={() => handleDrawCountChange(3)}
+                                style={{ cursor: 'pointer' }}
+                            >3</span>
                         </div>
                     </div>
 
