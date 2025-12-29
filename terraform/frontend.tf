@@ -52,7 +52,7 @@ resource "null_resource" "build_frontend" {
 
   provisioner "local-exec" {
     working_dir = "${path.module}/../frontend"
-    command     = "bun install && bun run build"
+    command     = "rm -rf node_modules .vite dist && bun install && bun run build"
   }
 }
 
