@@ -298,21 +298,17 @@ input:checked+.slider:hover {
 }
 
 .tableau-column {
-    min-height: calc(var(--card-height, 140px) * 3.5);
+    min-height: calc(var(--card-height, 140px) * 2.5);
 }
 
 
 .column-drop-zone {
-    min-height: calc(var(--card-height, 140px) * 3.5);
+    min-height: calc(var(--card-height, 140px) * 2.5);
     border-radius: calc(var(--card-width, 100px) * 0.06);
     transition: background-color 0.2s;
     display: flex;
     flex-direction: column;
     align-items: center;
-}
-
-.column-drop-zone:hover {
-    background-color: rgba(255, 255, 255, 0.05);
 }
 
 /* Footer */
@@ -402,15 +398,15 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 2.5);
+        min-height: calc(var(--card-height) * 2);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 2.5);
+        min-height: calc(var(--card-height) * 2);
     }
 
     .game-footer {
-        margin-top: 20px;
+        margin-top: 10px;
         padding: 15px;
         max-width: 100%;
     }
@@ -485,11 +481,11 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .empty-stock {
@@ -501,7 +497,7 @@ input:checked+.slider:hover {
     }
 
     .game-footer {
-        margin-top: 15px;
+        margin-top: 8px;
         padding: 10px;
     }
 
@@ -574,15 +570,16 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .game-footer {
         max-width: 100%;
+        margin-top: 10px;
     }
 
     /* Single-deck: fit 7 columns */
