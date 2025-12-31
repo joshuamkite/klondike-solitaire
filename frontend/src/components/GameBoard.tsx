@@ -10,7 +10,7 @@ import {
     moveCards,
     autoMoveToFoundation,
     findFoundationForCard,
-    autoPlay,
+    autoPlaySingleCard,
 } from '../game/klondikeLogic';
 import './GameBoard.css';
 
@@ -74,8 +74,26 @@ export function GameBoard() {
         cardIndex: number;
     } | null>(null);
 
-    const updateGameState = (newState: GameState) => {
+    const updateGameState = (newState: GameState, skipAutoPlay: boolean = false) => {
         dispatch({ type: 'UPDATE_STATE', newState });
+
+        // Auto-play: automatically move safe cards to foundations one at a time (FreeCell-style)
+        if (!skipAutoPlay && !newState.gameWon) {
+            // Recursive function to move cards one at a time with delays
+            const autoPlayRecursive = (currentState: GameState) => {
+                setTimeout(() => {
+                    const nextState = autoPlaySingleCard(currentState);
+                    if (nextState !== currentState) {
+                        // A card was moved, update state and try again
+                        dispatch({ type: 'UPDATE_STATE', newState: nextState });
+                        autoPlayRecursive(nextState);
+                    }
+                    // If no card was moved, stop recursing
+                }, 700);
+            };
+
+            autoPlayRecursive(newState);
+        }
     };
 
     const newGame = () => {
@@ -133,14 +151,6 @@ export function GameBoard() {
     const undo = () => {
         dispatch({ type: 'UNDO' });
         setSelectedCard(null);
-    };
-
-    const handleAutoPlay = () => {
-        const newState = autoPlay(gameState);
-        if (newState !== gameState) {
-            updateGameState(newState);
-            setSelectedCard(null);
-        }
     };
 
     const autoCompleteTimeoutRef = useRef<number | null>(null);
@@ -501,10 +511,6 @@ export function GameBoard() {
                 <div className="game-controls">
                     <button onClick={undo} disabled={history.length === 0}>
                         Undo
-                    </button>
-
-                    <button onClick={handleAutoPlay}>
-                        Auto Play
                     </button>
 
                     <div className="control-group">

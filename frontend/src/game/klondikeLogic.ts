@@ -354,49 +354,55 @@ function isSafeToAutoMove(card: Card, foundations: Card[][]): boolean {
     return minOppositeColorRank >= cardValue - 2;
 }
 
-// Auto-play: automatically move safe cards to foundations
+// Auto-play: automatically move ONE safe card to foundation (FreeCell-style)
+// Returns the new state if a card was moved, or the original state if no move was made
+export function autoPlaySingleCard(state: GameState): GameState {
+    // Try to move from waste first
+    if (state.waste.length > 0) {
+        const card = state.waste[state.waste.length - 1];
+        const foundationIndex = findFoundationForCard(card, state.foundations);
+
+        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+            const newState = moveCards(state, 'waste', 0, state.waste.length - 1, 'foundation', foundationIndex);
+            if (newState) {
+                return newState;
+            }
+        }
+    }
+
+    // Try to move from each tableau column
+    for (let columnIndex = 0; columnIndex < state.tableau.length; columnIndex++) {
+        const column = state.tableau[columnIndex];
+        if (column.length === 0) continue;
+
+        const card = column[column.length - 1];
+        if (!card.faceUp) continue;
+
+        const foundationIndex = findFoundationForCard(card, state.foundations);
+
+        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+            const newState = moveCards(state, 'tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
+            if (newState) {
+                return newState;
+            }
+        }
+    }
+
+    // No card was moved
+    return state;
+}
+
+// Auto-play: automatically move safe cards to foundations (moves all eligible cards)
+// This version keeps moving until no more moves are possible
 export function autoPlay(state: GameState): GameState {
     let currentState = state;
     let madeMove = true;
 
     // Keep trying to move cards until no more moves are possible
     while (madeMove) {
-        madeMove = false;
-
-        // Try to move from waste
-        if (currentState.waste.length > 0) {
-            const card = currentState.waste[currentState.waste.length - 1];
-            const foundationIndex = findFoundationForCard(card, currentState.foundations);
-
-            if (foundationIndex !== null && isSafeToAutoMove(card, currentState.foundations)) {
-                const newState = moveCards(currentState, 'waste', 0, currentState.waste.length - 1, 'foundation', foundationIndex);
-                if (newState) {
-                    currentState = newState;
-                    madeMove = true;
-                    continue;
-                }
-            }
-        }
-
-        // Try to move from each tableau column
-        for (let columnIndex = 0; columnIndex < currentState.tableau.length; columnIndex++) {
-            const column = currentState.tableau[columnIndex];
-            if (column.length === 0) continue;
-
-            const card = column[column.length - 1];
-            if (!card.faceUp) continue;
-
-            const foundationIndex = findFoundationForCard(card, currentState.foundations);
-
-            if (foundationIndex !== null && isSafeToAutoMove(card, currentState.foundations)) {
-                const newState = moveCards(currentState, 'tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
-                if (newState) {
-                    currentState = newState;
-                    madeMove = true;
-                    break; // Start over to check waste and tableau from beginning
-                }
-            }
-        }
+        const newState = autoPlaySingleCard(currentState);
+        madeMove = newState !== currentState;
+        currentState = newState;
     }
 
     return currentState;
