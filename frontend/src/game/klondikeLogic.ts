@@ -1,9 +1,25 @@
 import type { Card } from '../types/card';
 import type { GameState } from '../types/gameState';
 import { RANKS, SUITS, getRankValue, isRed } from '../types/card';
+import {
+    TABLEAU_COLUMNS_ONE_DECK,
+    TABLEAU_COLUMNS_TWO_DECK,
+    FOUNDATIONS_ONE_DECK,
+    FOUNDATIONS_TWO_DECK,
+    CARDS_PER_FOUNDATION_TO_WIN,
+    FOUNDATION_SUIT_ORDER,
+    FOUNDATION_SECOND_ROW_OFFSET,
+    AUTO_PLAY_ALWAYS_SAFE_RANK,
+    AUTO_PLAY_RANK_SAFETY_MARGIN,
+    KING_PLUS_ONE_SENTINEL,
+    NOT_FOUND_INDEX,
+    INITIAL_MOVE_COUNT,
+    SEQUENTIAL_RANK_DIFFERENCE,
+    DECK_ONE,
+} from '../constants';
 
 // Create a standard 52-card deck
-export function createDeck(deckNumber: 1 | 2 = 1): Card[] {
+export function createDeck(deckNumber: 1 | 2 = DECK_ONE): Card[] {
     const deck: Card[] = [];
     let id = 0;
 
@@ -33,20 +49,20 @@ export function shuffleDeck(deck: Card[]): Card[] {
 }
 
 // Initialize a new Klondike game
-export function initializeGame(deckCount: 1 | 2 = 1, drawCount: 1 | 3 = 3): GameState {
+export function initializeGame(deckCount: 1 | 2 = DECK_ONE, drawCount: 1 | 3 = 3): GameState {
     let allCards: Card[] = [];
 
-    if (deckCount === 1) {
-        allCards = shuffleDeck(createDeck(1));
+    if (deckCount === DECK_ONE) {
+        allCards = shuffleDeck(createDeck(DECK_ONE));
     } else {
         // Combine two decks
-        const deck1 = createDeck(1);
+        const deck1 = createDeck(DECK_ONE);
         const deck2 = createDeck(2);
         allCards = shuffleDeck([...deck1, ...deck2]);
     }
 
     // Deal tableau: 7 columns for 1 deck, 9 columns for 2 decks
-    const columnCount = deckCount === 1 ? 7 : 9;
+    const columnCount = deckCount === DECK_ONE ? TABLEAU_COLUMNS_ONE_DECK : TABLEAU_COLUMNS_TWO_DECK;
     const tableau: Card[][] = Array(columnCount).fill(null).map(() => []);
     let deckIndex = 0;
 
@@ -66,7 +82,7 @@ export function initializeGame(deckCount: 1 | 2 = 1, drawCount: 1 | 3 = 3): Game
     }
 
     // 4 foundations for 1 deck, 8 for 2 decks (2 per suit)
-    const foundationCount = deckCount === 1 ? 4 : 8;
+    const foundationCount = deckCount === DECK_ONE ? FOUNDATIONS_ONE_DECK : FOUNDATIONS_TWO_DECK;
     const foundations: Card[][] = Array(foundationCount).fill(null).map(() => []);
 
     return {
@@ -74,7 +90,7 @@ export function initializeGame(deckCount: 1 | 2 = 1, drawCount: 1 | 3 = 3): Game
         foundations,
         stock,
         waste: [],
-        moves: 0,
+        moves: INITIAL_MOVE_COUNT,
         startTime: Date.now(),
         gameWon: false,
         deckCount,
@@ -100,7 +116,7 @@ export function canPlaceOnFoundation(card: Card, foundation: Card[]): boolean {
     const cardValue = getRankValue(card.rank);
     const topValue = getRankValue(topCard.rank);
 
-    return cardValue === topValue + 1;
+    return cardValue === topValue + SEQUENTIAL_RANK_DIFFERENCE;
 }
 
 // Check if a card (or sequence) can be placed on a tableau column
@@ -121,7 +137,7 @@ export function canPlaceOnTableau(card: Card, tableau: Card[]): boolean {
     const cardValue = getRankValue(card.rank);
     const topValue = getRankValue(topCard.rank);
 
-    return cardValue === topValue - 1;
+    return cardValue === topValue - SEQUENTIAL_RANK_DIFFERENCE;
 }
 
 // Validate that a sequence of cards forms a valid descending, alternating-color run
@@ -142,7 +158,7 @@ export function isValidSequence(cards: Card[]): boolean {
         const currentValue = getRankValue(current.rank);
         const nextValue = getRankValue(next.rank);
 
-        if (currentValue !== nextValue + 1) {
+        if (currentValue !== nextValue + SEQUENTIAL_RANK_DIFFERENCE) {
             return false;
         }
     }
@@ -179,19 +195,19 @@ export function drawFromStock(state: GameState): GameState {
 // For 2-deck mode: top row (0-3) fills first, then bottom row (4-7)
 export function findFoundationForCard(card: Card, foundations: Card[][]): number | null {
     // Foundation order: Hearts (0), Clubs (1), Diamonds (2), Spades (3)
-    const suitOrder = ['hearts', 'clubs', 'diamonds', 'spades'] as const;
+    const suitOrder = FOUNDATION_SUIT_ORDER;
     const baseIndex = suitOrder.indexOf(card.suit);
 
-    if (baseIndex === -1) return null;
+    if (baseIndex === NOT_FOUND_INDEX) return null;
 
     // For 1 deck mode: just use the base index
-    if (foundations.length === 4) {
+    if (foundations.length === FOUNDATIONS_ONE_DECK) {
         return canPlaceOnFoundation(card, foundations[baseIndex]) ? baseIndex : null;
     }
 
     // For 2 deck mode: try top row first, then bottom row
     const topRowIndex = baseIndex;
-    const bottomRowIndex = baseIndex + 4;
+    const bottomRowIndex = baseIndex + FOUNDATION_SECOND_ROW_OFFSET;
 
     if (canPlaceOnFoundation(card, foundations[topRowIndex])) {
         return topRowIndex;
@@ -241,7 +257,7 @@ export function moveCards(
     // Validate move
     if (toPile === 'foundation') {
         // Can only move single cards to foundation
-        if (cardsToMove.length !== 1) return null;
+        if (cardsToMove.length !== SEQUENTIAL_RANK_DIFFERENCE) return null;
         const card = cardsToMove[0];
         const foundation = newState.foundations[toIndex];
 
@@ -292,7 +308,7 @@ export function moveCards(
 // Check if the game is won (all cards in foundations)
 export function checkWin(state: GameState): boolean {
     // Each foundation should have 13 cards
-    return state.foundations.every(foundation => foundation.length === 13);
+    return state.foundations.every(foundation => foundation.length === CARDS_PER_FOUNDATION_TO_WIN);
 }
 
 // Auto-move card to foundation if possible (double-click helper)
@@ -322,19 +338,19 @@ export function autoMoveToFoundation(state: GameState, fromPile: 'tableau' | 'wa
 
 // Get the minimum rank value currently in foundations for a given color
 function getMinFoundationRankForColor(foundations: Card[][], isRedCard: boolean): number {
-    let minRank = 14; // King value + 1
+    let minRank = KING_PLUS_ONE_SENTINEL; // King value + 1
 
     for (const foundation of foundations) {
-        if (foundation.length === 0) continue;
+        if (foundation.length === INITIAL_MOVE_COUNT) continue;
 
-        const topCard = foundation[foundation.length - 1];
+        const topCard = foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE];
         if (isRed(topCard.suit) === isRedCard) {
             const rankValue = getRankValue(topCard.rank);
             minRank = Math.min(minRank, rankValue);
         }
     }
 
-    return minRank === 14 ? 0 : minRank;
+    return minRank === KING_PLUS_ONE_SENTINEL ? INITIAL_MOVE_COUNT : minRank;
 }
 
 // Check if a card can be safely auto-moved to foundation
@@ -343,7 +359,7 @@ function isSafeToAutoMove(card: Card, foundations: Card[][]): boolean {
     const cardValue = getRankValue(card.rank);
 
     // Aces and 2s are always safe
-    if (cardValue <= 2) return true;
+    if (cardValue <= AUTO_PLAY_ALWAYS_SAFE_RANK) return true;
 
     // For other cards, check if opposite-color cards 2 ranks lower are in foundations
     // This is a conservative strategy to avoid blocking gameplay
@@ -351,7 +367,7 @@ function isSafeToAutoMove(card: Card, foundations: Card[][]): boolean {
     const minOppositeColorRank = getMinFoundationRankForColor(foundations, !isCardRed);
 
     // Safe if opposite color foundations are at least 2 behind
-    return minOppositeColorRank >= cardValue - 2;
+    return minOppositeColorRank >= cardValue - AUTO_PLAY_RANK_SAFETY_MARGIN;
 }
 
 // Auto-play: automatically move ONE safe card to foundation (FreeCell-style)
