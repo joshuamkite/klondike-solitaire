@@ -284,8 +284,8 @@ input:checked+.slider:hover {
 .foundation {
     position: relative;
     /* Expand the drop zone to make drops easier */
-    padding: calc(var(--card-height, 140px) * 0.1);
-    margin: calc(var(--card-height, 140px) * -0.1);
+    padding: calc(var(--card-height, 140px) * 0.15);
+    margin: calc(var(--card-height, 140px) * -0.15);
 }
 
 .tableau {
