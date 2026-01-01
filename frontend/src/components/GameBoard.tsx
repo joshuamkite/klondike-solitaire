@@ -1,6 +1,6 @@
-import { useState, useReducer, useEffect, useRef } from 'react';
-import type { GameState } from '../types/gameState';
+import { useState, useEffect, useRef } from 'react';
 import type { Card as CardType } from '../types/card';
+import type { GameState } from '../types/gameState';
 import { Card } from './Card';
 import { AnimatedCard } from './AnimatedCard';
 import { VictoryAnimation } from './VictoryAnimation';
@@ -8,73 +8,30 @@ import { LicenseModal } from './LicenseModal';
 import {
     initializeGame,
     drawFromStock,
-    moveCards,
     findFoundationForCard,
     autoPlaySingleCard,
-    getNextAutoCompleteAction,
-    allTableauCardsFaceUp,
 } from '../game/klondikeLogic';
 import {
+    useGameState,
+    useCardDimensions,
+    useCardAnimation,
+    useDragAndDrop,
+    useAutoComplete,
+} from '../hooks';
+import {
     AUTO_PLAY_DELAY_MS,
-    AUTO_COMPLETE_DELAY_MS,
     DRAG_OVERLAY_Z_INDEX,
     DRAG_OVERLAY_TRANSFORM,
-    GAME_WIDTH_PERCENT,
-    MOBILE_BREAKPOINT_PX,
-    BOARD_PADDING_MOBILE_PX,
-    BOARD_PADDING_DESKTOP_PX,
-    CARD_GAP_PX,
-    CARD_MIN_WIDTH_PX,
-    CARD_ASPECT_RATIO,
     CARD_DEFAULT_HEIGHT_PX,
     CARD_DEFAULT_WIDTH_PX,
     TABLEAU_CARD_OVERLAP_RATIO,
-    TABLEAU_CARD_VISIBLE_RATIO,
     DRAG_OVERLAY_SPACING_RATIO,
-    TABLEAU_COLUMNS_ONE_DECK,
-    TABLEAU_COLUMNS_TWO_DECK,
     FOUNDATION_SUIT_ORDER,
-    TRANSPARENT_PIXEL_DATA_URI,
-    INVALID_DRAG_COORDINATE,
     DECK_ONE,
     INITIAL_MOVE_COUNT,
     SEQUENTIAL_RANK_DIFFERENCE,
 } from '../constants';
 import './GameBoard.css';
-
-// Reducer for managing game state and history
-type GameAction =
-    | { type: 'UPDATE_STATE'; newState: GameState }
-    | { type: 'UNDO' }
-    | { type: 'NEW_GAME'; initialState?: GameState };
-
-interface GameReducerState {
-    current: GameState;
-    history: GameState[];
-}
-
-function gameReducer(state: GameReducerState, action: GameAction): GameReducerState {
-    switch (action.type) {
-        case 'UPDATE_STATE':
-            return {
-                current: action.newState,
-                history: [...state.history, state.current],
-            };
-        case 'UNDO':
-            if (state.history.length === 0) return state;
-            return {
-                current: state.history[state.history.length - 1],
-                history: state.history.slice(0, -1),
-            };
-        case 'NEW_GAME':
-            return {
-                current: action.initialState || state.current,
-                history: [],
-            };
-        default:
-            return state;
-    }
-}
 
 export function GameBoard() {
     const [deckCount, setDeckCount] = useState<1 | 2>(DECK_ONE);
@@ -82,19 +39,16 @@ export function GameBoard() {
     const [showLicense, setShowLicense] = useState(false);
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
-    const gameStateRef = useRef<GameState>(initializeGame(deckCount, drawCount));
 
-    const [gameReducerState, dispatch] = useReducer(gameReducer, {
-        current: initializeGame(deckCount, drawCount),
-        history: []
-    });
-    const gameState = gameReducerState.current;
-    const history = gameReducerState.history;
-
-    // Keep ref in sync with current state
-    useEffect(() => {
-        gameStateRef.current = gameState;
-    }, [gameState]);
+    // Custom hooks
+    const {
+        gameState,
+        gameStateRef,
+        history,
+        updateGameState: baseUpdateGameState,
+        undo,
+        startNewGame,
+    } = useGameState(deckCount, drawCount);
 
     const [selectedCard, setSelectedCard] = useState<{
         fromPile: 'tableau' | 'waste' | 'foundation';
@@ -102,211 +56,23 @@ export function GameBoard() {
         cardIndex: number;
     } | null>(null);
 
-    const [draggedCard, setDraggedCard] = useState<{
-        fromPile: 'tableau' | 'waste' | 'foundation';
-        fromIndex: number;
-        cardIndex: number;
-    } | null>(null);
+    // Card dimensions hook
+    useCardDimensions(deckCount, gameBoardRef, gameAreaRef);
 
-    // Custom drag overlay state for multi-card sequences
-    const [dragOverlay, setDragOverlay] = useState<{
-        cards: CardType[];
-        x: number;
-        y: number;
-    } | null>(null);
+    // Card animation hook - pass a ref for the update function to avoid circular dependency
+    const updateGameStateImmediateRef = useRef<(newState: GameState, skipAutoPlay?: boolean) => void>(() => { });
 
-    // Animation state
-    const [animatingCards, setAnimatingCards] = useState<{
-        cards: CardType[];
-        startPos: { x: number; y: number };
-        endPos: { x: number; y: number };
-        onComplete: () => void;
-    } | null>(null);
+    const {
+        animatingCards,
+        animateMove,
+        detectAutoPlayMove,
+    } = useCardAnimation(gameState, (newState: GameState, skipAutoPlay?: boolean) => {
+        updateGameStateImmediateRef.current(newState, skipAutoPlay);
+    });
 
-    // Helper function to get card element position
-    const getCardPosition = (cardId: string): { x: number; y: number } | null => {
-        const element = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
-        if (!element) return null;
-
-        const rect = element.getBoundingClientRect();
-        return {
-            x: rect.left,
-            y: rect.top
-        };
-    };
-
-    // Helper to get the destination element position (uses current DOM state, not future state)
-    const getDestinationPosition = (
-        toPile: 'tableau' | 'foundation',
-        toIndex: number
-    ): { x: number; y: number } | null => {
-        if (toPile === 'foundation') {
-            // Find the foundation cell
-            const foundationCells = document.querySelectorAll('.foundation');
-            const targetCell = foundationCells[toIndex] as HTMLElement;
-            if (!targetCell) return null;
-
-            const rect = targetCell.getBoundingClientRect();
-            return { x: rect.left, y: rect.top };
-        } else {
-            // Tableau column - find the current last card in DOM
-            const tableauColumns = document.querySelectorAll('.tableau-column');
-            const targetColumn = tableauColumns[toIndex] as HTMLElement;
-            if (!targetColumn) return null;
-
-            // Look for cards in this column
-            const cards = targetColumn.querySelectorAll('.card');
-            if (cards.length > 0) {
-                // Get the last card's position
-                const lastCard = cards[cards.length - 1] as HTMLElement;
-                const rect = lastCard.getBoundingClientRect();
-
-                // Calculate the position for the new card (below the last one)
-                const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || `${CARD_DEFAULT_HEIGHT_PX}`);
-                return {
-                    x: rect.left,
-                    y: rect.top + cardHeight * TABLEAU_CARD_VISIBLE_RATIO // 75% overlap means 25% visible
-                };
-            } else {
-                // Empty column - get the placeholder position
-                const placeholder = targetColumn.querySelector('.card-placeholder') as HTMLElement;
-                if (!placeholder) return null;
-
-                const rect = placeholder.getBoundingClientRect();
-                return { x: rect.left, y: rect.top };
-            }
-        }
-    };
-
-    // Perform an animated move
-    const animateMove = (
-        fromPile: 'tableau' | 'waste' | 'foundation',
-        fromIndex: number,
-        cardIndex: number,
-        toPile: 'tableau' | 'foundation',
-        toIndex: number,
-        onAnimationComplete?: () => void,
-        sourceState?: GameState  // Optional source state for auto-play
-    ) => {
-        const stateToUse = sourceState || gameState;
-
-        // Get the cards being moved
-        let cardsToMove: CardType[];
-        let firstCardId: string;
-
-        if (fromPile === 'waste') {
-            cardsToMove = [stateToUse.waste[stateToUse.waste.length - 1]];
-            firstCardId = cardsToMove[0].id;
-        } else if (fromPile === 'foundation') {
-            const foundation = stateToUse.foundations[fromIndex];
-            cardsToMove = [foundation[foundation.length - 1]];
-            firstCardId = cardsToMove[0].id;
-        } else {
-            // Tableau - might be moving multiple cards
-            const column = stateToUse.tableau[fromIndex];
-            cardsToMove = column.slice(cardIndex);
-            firstCardId = cardsToMove[0].id;
-        }
-
-        // Get start position
-        const startPos = getCardPosition(firstCardId);
-        if (!startPos) {
-            // Can't animate - just do the move immediately
-            const newState = moveCards(gameState, fromPile, fromIndex, cardIndex, toPile, toIndex);
-            if (newState) {
-                updateGameStateImmediate(newState);
-            }
-            onAnimationComplete?.();
-            return;
-        }
-
-        // Perform the move to get the new state
-        const newState = moveCards(stateToUse, fromPile, fromIndex, cardIndex, toPile, toIndex);
-        if (!newState) {
-            onAnimationComplete?.();
-            return; // Invalid move
-        }
-
-        // Get end position based on current DOM state
-        const endPos = getDestinationPosition(toPile, toIndex);
-        if (!endPos) {
-            // Can't get end position - just update immediately
-            updateGameStateImmediate(newState);
-            onAnimationComplete?.();
-            return;
-        }
-
-        // Start the animation
-        setAnimatingCards({
-            cards: cardsToMove,
-            startPos,
-            endPos,
-            onComplete: () => {
-                setAnimatingCards(null);
-                updateGameStateImmediate(newState);
-                onAnimationComplete?.();
-            }
-        });
-    };
-
-    // Helper to detect which card moved between states
-    const detectAutoPlayMove = (oldState: GameState, newState: GameState): {
-        fromPile: 'tableau' | 'waste';
-        fromIndex: number;
-        cardIndex: number;
-        toPile: 'foundation';
-        toIndex: number;
-    } | null => {
-        // Check waste pile
-        if (oldState.waste.length > newState.waste.length) {
-            const movedCard = oldState.waste[oldState.waste.length - 1];
-            // Find which foundation gained a card
-            for (let i = 0; i < newState.foundations.length; i++) {
-                if (newState.foundations[i].length > oldState.foundations[i].length) {
-                    const addedCard = newState.foundations[i][newState.foundations[i].length - 1];
-                    if (addedCard.id === movedCard.id) {
-                        return {
-                            fromPile: 'waste',
-                            fromIndex: 0,
-                            cardIndex: oldState.waste.length - 1,
-                            toPile: 'foundation',
-                            toIndex: i
-                        };
-                    }
-                }
-            }
-        }
-
-        // Check tableau columns
-        for (let col = 0; col < oldState.tableau.length; col++) {
-            const oldColumn = oldState.tableau[col];
-            const newColumn = newState.tableau[col];
-
-            if (oldColumn.length > newColumn.length) {
-                const movedCard = oldColumn[oldColumn.length - 1];
-                // Find which foundation gained this card
-                for (let i = 0; i < newState.foundations.length; i++) {
-                    if (newState.foundations[i].length > oldState.foundations[i].length) {
-                        const addedCard = newState.foundations[i][newState.foundations[i].length - 1];
-                        if (addedCard.id === movedCard.id) {
-                            return {
-                                fromPile: 'tableau',
-                                fromIndex: col,
-                                cardIndex: oldColumn.length - 1,
-                                toPile: 'foundation',
-                                toIndex: i
-                            };
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    };
-
+    // Enhanced update function with auto-play
     const updateGameStateImmediate = (newState: GameState, skipAutoPlay: boolean = false) => {
-        dispatch({ type: 'UPDATE_STATE', newState });
+        baseUpdateGameState(newState);
 
         // Auto-play: automatically move safe cards to foundations one at a time (FreeCell-style)
         if (!skipAutoPlay && !newState.gameWon) {
@@ -335,7 +101,7 @@ export function GameBoard() {
                             );
                         } else {
                             // Couldn't detect move, just update state
-                            dispatch({ type: 'UPDATE_STATE', newState: nextState });
+                            baseUpdateGameState(nextState);
                             autoPlayRecursive();
                         }
                     }
@@ -347,9 +113,29 @@ export function GameBoard() {
         }
     };
 
+    // Keep the ref up to date using useEffect
+    useEffect(() => {
+        updateGameStateImmediateRef.current = updateGameStateImmediate;
+    });
+
     const updateGameState = (newState: GameState, skipAutoPlay: boolean = false) => {
         updateGameStateImmediate(newState, skipAutoPlay);
     };
+
+    // Drag and drop hook
+    const {
+        dragOverlay,
+        handleDragStart,
+        handleDrag,
+        handleDragEnd,
+        handleDragOver,
+        handleDropOnTableau,
+        handleDropOnFoundation,
+        isCardDragging,
+    } = useDragAndDrop(gameState, updateGameState);
+
+    // Auto-complete hook
+    useAutoComplete(gameState, animateMove, updateGameStateImmediate);
 
     const newGame = () => {
         // Warn if game is in progress (has moves and not won)
@@ -360,11 +146,11 @@ export function GameBoard() {
             if (!confirmed) return;
         }
 
-        dispatch({ type: 'NEW_GAME' });
+        startNewGame();
         setSelectedCard(null);
         // Re-initialize with current deck count and draw count
         const newState = initializeGame(deckCount, drawCount);
-        dispatch({ type: 'UPDATE_STATE', newState });
+        baseUpdateGameState(newState);
     };
 
     const handleDeckCountChange = (newCount: 1 | 2) => {
@@ -382,7 +168,7 @@ export function GameBoard() {
         // Start a new game with the new deck count
         setSelectedCard(null);
         const newState = initializeGame(newCount, drawCount);
-        dispatch({ type: 'NEW_GAME', initialState: newState });
+        startNewGame(newState);
     };
 
     const handleDrawCountChange = (newCount: 1 | 3) => {
@@ -400,15 +186,13 @@ export function GameBoard() {
         // Start a new game with the new draw count
         setSelectedCard(null);
         const newState = initializeGame(deckCount, newCount);
-        dispatch({ type: 'NEW_GAME', initialState: newState });
+        startNewGame(newState);
     };
 
-    const undo = () => {
-        dispatch({ type: 'UNDO' });
+    const handleUndo = () => {
+        undo();
         setSelectedCard(null);
     };
-
-    const autoCompleteTimeoutRef = useRef<number | null>(null);
 
     // Warn before leaving page if game is in progress
     useEffect(() => {
@@ -425,108 +209,6 @@ export function GameBoard() {
         window.addEventListener('beforeunload', handleBeforeUnload);
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [gameState.moves, gameState.gameWon]);
-
-    // Calculate and set card dimensions based on game area width
-    useEffect(() => {
-        const calculateCardDimensions = () => {
-            if (!gameBoardRef.current || !gameAreaRef.current) return;
-
-            const boardPadding = window.innerWidth < MOBILE_BREAKPOINT_PX ? BOARD_PADDING_MOBILE_PX : BOARD_PADDING_DESKTOP_PX;
-
-            // Desktop game width: Change this value to adjust game width (0.6 = 60%, 0.7 = 70%, 0.8 = 80%)
-            const gameWidthPercent = GAME_WIDTH_PERCENT;
-
-            const viewportWidth = window.innerWidth - (boardPadding * 2);
-            const availableWidth = viewportWidth * gameWidthPercent;
-
-            // Gap between cards
-            const cardGap = CARD_GAP_PX;
-
-            // Tableau: 7 columns for 1 deck, 9 columns for 2 decks
-            const tableauItems = deckCount === DECK_ONE ? TABLEAU_COLUMNS_ONE_DECK : TABLEAU_COLUMNS_TWO_DECK;
-            const tableauGaps = tableauItems - SEQUENTIAL_RANK_DIFFERENCE;
-
-            // Calculate card width to fill available space
-            let cardWidth = (availableWidth - (tableauGaps * cardGap)) / tableauItems;
-
-            // Set reasonable bounds (minimum 60px)
-            const minWidth = CARD_MIN_WIDTH_PX;
-            cardWidth = Math.max(minWidth, cardWidth);
-
-            // Maintain 5:7 aspect ratio (width:height)
-            const cardHeight = cardWidth * CARD_ASPECT_RATIO;
-
-            // Set CSS custom properties
-            gameBoardRef.current.style.setProperty('--card-width', `${cardWidth}px`);
-            gameBoardRef.current.style.setProperty('--card-height', `${cardHeight}px`);
-            gameBoardRef.current.style.setProperty('--card-gap', `${cardGap}px`);
-            gameBoardRef.current.style.setProperty('--board-padding', `${boardPadding}px`);
-            gameBoardRef.current.style.setProperty('--max-game-width', `${gameWidthPercent * 100}%`);
-        };
-
-        calculateCardDimensions();
-
-        // Recalculate on window resize
-        const handleResize = () => {
-            calculateCardDimensions();
-        };
-
-        window.addEventListener('resize', handleResize);
-        return () => window.removeEventListener('resize', handleResize);
-    }, [deckCount]);
-
-    // Extended Autocomplete: When all tableau cards are face-up, automatically draw from stock
-    // and move cards to foundations until game is complete
-    useEffect(() => {
-        // Clear any existing timeout
-        if (autoCompleteTimeoutRef.current) {
-            clearTimeout(autoCompleteTimeoutRef.current);
-        }
-
-        // Check if we should autocomplete (all tableau cards face-up and not won)
-        if (!allTableauCardsFaceUp(gameState) || gameState.gameWon) {
-            return;
-        }
-
-        // Process next autocomplete action
-        autoCompleteTimeoutRef.current = window.setTimeout(() => {
-            const action = getNextAutoCompleteAction(gameState);
-
-            if (action.action === 'move' && action.newState && action.moveDetails) {
-                // Animate the card move
-                const { fromPile, fromIndex, cardIndex, toPile, toIndex } = action.moveDetails;
-                animateMove(fromPile, fromIndex, cardIndex, toPile, toIndex);
-            } else if (action.action === 'draw' && action.newState) {
-                // Draw from stock (no animation for stock draw)
-                updateGameStateImmediate(action.newState, true); // Skip auto-play to avoid conflicts
-            }
-            // If action is 'done', do nothing (no more moves possible)
-        }, AUTO_COMPLETE_DELAY_MS); // Small delay for visual effect
-
-        return () => {
-            if (autoCompleteTimeoutRef.current) {
-                clearTimeout(autoCompleteTimeoutRef.current);
-            }
-        };
-    }, [gameState]);
-
-    // Fail-safe: Clear drag overlay on any mouseup event globally
-    useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            if (dragOverlay) {
-                setDragOverlay(null);
-                setDraggedCard(null);
-            }
-        };
-
-        document.addEventListener('mouseup', handleGlobalMouseUp);
-        document.addEventListener('dragend', handleGlobalMouseUp);
-
-        return () => {
-            document.removeEventListener('mouseup', handleGlobalMouseUp);
-            document.removeEventListener('dragend', handleGlobalMouseUp);
-        };
-    }, [dragOverlay]);
 
     const handleStockClick = () => {
         const newState = drawFromStock(gameState);
@@ -649,116 +331,6 @@ export function GameBoard() {
         setSelectedCard(null);
     };
 
-    const handleDragStart = (
-        e: React.DragEvent,
-        fromPile: 'tableau' | 'waste' | 'foundation',
-        fromIndex: number,
-        cardIndex: number
-    ) => {
-        setDraggedCard({ fromPile, fromIndex, cardIndex });
-        setSelectedCard(null); // Clear click-based selection when dragging
-        e.dataTransfer.effectAllowed = 'move';
-
-        // For multi-card sequences, set up custom drag overlay
-        if (fromPile === 'tableau') {
-            const column = gameState.tableau[fromIndex];
-            const cardsBeingDragged = column.slice(cardIndex);
-
-            if (cardsBeingDragged.length > SEQUENTIAL_RANK_DIFFERENCE) {
-                // Use a transparent 1x1 pixel as the drag image to hide browser's default
-                const transparentImg = new Image();
-                transparentImg.src = TRANSPARENT_PIXEL_DATA_URI;
-                e.dataTransfer.setDragImage(transparentImg, INITIAL_MOVE_COUNT, INITIAL_MOVE_COUNT);
-
-                // Set up our custom overlay
-                setDragOverlay({
-                    cards: cardsBeingDragged,
-                    x: e.clientX,
-                    y: e.clientY
-                });
-            }
-        }
-    };
-
-    const handleDrag = (e: React.DragEvent) => {
-        // Update overlay position if it exists and we have valid coordinates
-        // Note: browsers may send 0,0 on the final drag event before dragend
-        if (dragOverlay) {
-            if (e.clientX !== INVALID_DRAG_COORDINATE || e.clientY !== INVALID_DRAG_COORDINATE) {
-                setDragOverlay(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
-            }
-        }
-    };
-
-    const handleDragEnd = () => {
-        // Always clear both dragged card and overlay states
-        setDraggedCard(null);
-        setDragOverlay(null);
-    };
-
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
-
-    const handleDropOnTableau = (e: React.DragEvent, columnIndex: number) => {
-        e.preventDefault();
-        if (!draggedCard) return;
-
-        const newState = moveCards(
-            gameState,
-            draggedCard.fromPile,
-            draggedCard.fromIndex,
-            draggedCard.cardIndex,
-            'tableau',
-            columnIndex
-        );
-
-        if (newState) {
-            updateGameState(newState);
-        }
-        setDraggedCard(null);
-        setDragOverlay(null); // Ensure overlay is cleared on drop
-    };
-
-    const handleDropOnFoundation = (e: React.DragEvent) => {
-        e.preventDefault();
-        if (!draggedCard) return;
-
-        // Get the card being dragged
-        let card: CardType;
-        if (draggedCard.fromPile === 'waste') {
-            card = gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE];
-        } else if (draggedCard.fromPile === 'foundation') {
-            card = gameState.foundations[draggedCard.fromIndex][draggedCard.cardIndex];
-        } else {
-            card = gameState.tableau[draggedCard.fromIndex][draggedCard.cardIndex];
-        }
-
-        // Find the appropriate foundation for this card
-        const foundationIndex = findFoundationForCard(card, gameState.foundations);
-        if (foundationIndex === null) {
-            setDraggedCard(null);
-            setDragOverlay(null); // Ensure overlay is cleared
-            return;
-        }
-
-        const newState = moveCards(
-            gameState,
-            draggedCard.fromPile,
-            draggedCard.fromIndex,
-            draggedCard.cardIndex,
-            'foundation',
-            foundationIndex
-        );
-
-        if (newState) {
-            updateGameState(newState);
-        }
-        setDraggedCard(null);
-        setDragOverlay(null); // Ensure overlay is cleared on drop
-    };
-
     const isCardSelected = (card: CardType): boolean => {
         if (!selectedCard) return false;
 
@@ -779,24 +351,15 @@ export function GameBoard() {
         }
     };
 
-    const isCardDragging = (card: CardType): boolean => {
-        if (!draggedCard) return false;
-
-        if (draggedCard.fromPile === 'waste') {
-            return gameState.waste.length > INITIAL_MOVE_COUNT && gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
-        } else if (draggedCard.fromPile === 'foundation') {
-            const foundation = gameState.foundations[draggedCard.fromIndex];
-            return foundation.length > INITIAL_MOVE_COUNT && foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
-        } else {
-            // For tableau, check if card is part of the dragged sequence
-            const column = gameState.tableau[draggedCard.fromIndex];
-
-            // Find the card in the column
-            const cardIndexInColumn = column.findIndex(c => c.id === card.id);
-
-            // Card is being dragged if it's at or after the dragged index in the same column
-            return cardIndexInColumn >= draggedCard.cardIndex && cardIndexInColumn < column.length;
-        }
+    // Wrapper for drag start that also clears selection
+    const handleDragStartWithClear = (
+        e: React.DragEvent,
+        fromPile: 'tableau' | 'waste' | 'foundation',
+        fromIndex: number,
+        cardIndex: number
+    ) => {
+        setSelectedCard(null); // Clear click-based selection when dragging
+        handleDragStart(e, fromPile, fromIndex, cardIndex);
     };
 
     return (
@@ -809,7 +372,7 @@ export function GameBoard() {
                 </div>
 
                 <div className="game-controls">
-                    <button onClick={undo} disabled={history.length === INITIAL_MOVE_COUNT}>
+                    <button onClick={handleUndo} disabled={history.length === INITIAL_MOVE_COUNT}>
                         Undo
                     </button>
 
@@ -894,7 +457,7 @@ export function GameBoard() {
                                     card={gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]}
                                     className={`${isCardSelected(gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]) ? 'selected' : ''} ${isCardDragging(gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]) ? 'dragging' : ''}`}
                                     draggable={true}
-                                    onDragStart={(e) => handleDragStart(e, 'waste', INITIAL_MOVE_COUNT, gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE)}
+                                    onDragStart={(e) => handleDragStartWithClear(e, 'waste', INITIAL_MOVE_COUNT, gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                     onDragEnd={handleDragEnd}
                                 />
                             ) : (
@@ -923,7 +486,7 @@ export function GameBoard() {
                                         <Card
                                             card={topCard}
                                             draggable={true}
-                                            onDragStart={(e) => handleDragStart(e, 'foundation', index, foundation.length - SEQUENTIAL_RANK_DIFFERENCE)}
+                                            onDragStart={(e) => handleDragStartWithClear(e, 'foundation', index, foundation.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                             onDragEnd={handleDragEnd}
                                             className={`${isCardSelected(topCard) ? 'selected' : ''} ${isCardDragging(topCard) ? 'dragging' : ''}`}
                                         />
@@ -963,7 +526,7 @@ export function GameBoard() {
                                                 marginTop: cardIndex === INITIAL_MOVE_COUNT ? '0' : `calc(var(--card-height, ${CARD_DEFAULT_HEIGHT_PX}px) * -${TABLEAU_CARD_OVERLAP_RATIO})`
                                             }}
                                             draggable={card.faceUp}
-                                            onDragStart={(e) => handleDragStart(e, 'tableau', columnIndex, cardIndex)}
+                                            onDragStart={(e) => handleDragStartWithClear(e, 'tableau', columnIndex, cardIndex)}
                                             onDrag={handleDrag}
                                             onDragEnd={handleDragEnd}
                                         />
