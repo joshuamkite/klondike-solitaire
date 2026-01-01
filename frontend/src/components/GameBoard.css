@@ -301,12 +301,12 @@ input:checked+.slider:hover {
 }
 
 .tableau-column {
-    min-height: calc(var(--card-height, 140px) * 3.5);
+    min-height: calc(var(--card-height, 140px) * 0.5);
 }
 
 
 .column-drop-zone {
-    min-height: calc(var(--card-height, 140px) * 3.5);
+    min-height: calc(var(--card-height, 140px) * 0.5);
     border-radius: calc(var(--card-width, 100px) * 0.06);
     transition: background-color 0.2s;
     display: flex;
@@ -320,7 +320,7 @@ input:checked+.slider:hover {
 /* Footer */
 .game-footer {
     max-width: var(--max-game-width, 80%);
-    margin: 40px auto 0;
+    margin: 20px auto 0;
     padding: 20px;
     text-align: center;
 }
@@ -404,15 +404,15 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 2);
+        min-height: calc(var(--card-height) * 1.5);
     }
 
     .game-footer {
-        margin-top: 10px;
+        margin-top: 30px;
         padding: 15px;
         max-width: 100%;
     }
@@ -487,11 +487,11 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 1.5);
+        min-height: calc(var(--card-height) * 1.2);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 1.5);
+        min-height: calc(var(--card-height) * 1.2);
     }
 
     .empty-stock {
@@ -503,7 +503,7 @@ input:checked+.slider:hover {
     }
 
     .game-footer {
-        margin-top: 8px;
+        margin-top: 20px;
         padding: 10px;
     }
 
@@ -576,16 +576,16 @@ input:checked+.slider:hover {
     }
 
     .tableau-column {
-        min-height: calc(var(--card-height) * 1.5);
+        min-height: calc(var(--card-height) * 1.2);
     }
 
     .column-drop-zone {
-        min-height: calc(var(--card-height) * 1.5);
+        min-height: calc(var(--card-height) * 1.2);
     }
 
     .game-footer {
         max-width: 100%;
-        margin-top: 10px;
+        margin-top: 20px;
     }
 
     /* Single-deck: fit 7 columns */
