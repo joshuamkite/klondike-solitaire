@@ -13,8 +13,10 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 /frontend
   /src
     /components      - React components (Card, GameBoard, VictoryAnimation)
+    /hooks          - Custom React hooks for game functionality
     /game           - Game logic, state management, and rules
     /types          - TypeScript type definitions
+    /constants      - Named constants (animation, layout, game settings)
   /public
     /cards          - SVG card images from Wikimedia Commons
 /dev_tooling/download_cards - Go script to download card images
@@ -82,16 +84,48 @@ Game is won when all cards are moved to foundations (13 cards per foundation).
 
 ## Component Architecture
 
-### GameBoard
-Main game component managing state with useReducer:
+### Custom Hooks
+
+#### useGameState
+Manages game state with reducer pattern:
 - Game state and move history
-- Card selection and drag-and-drop handlers
-- Undo functionality
-- Game mode toggles (deck count, draw count)
-- Extended autocomplete when all tableau cards face-up (automatically draws from stock and completes game)
-- Animation orchestration with `animateMove()` function
+- Undo/redo functionality
+- State update functions
+- Maintains gameStateRef for async operations
+
+#### useCardDimensions
+Handles responsive card sizing:
+- Calculates card dimensions based on viewport
+- Manages resize listeners
+- Sets CSS custom properties dynamically
+
+#### useCardAnimation
+Orchestrates card movement animations:
+- Animation state management
+- `animateMove()` function for all card movements
 - Position calculation utilities (`getCardPosition`, `getDestinationPosition`)
 - Auto-play move detection with `detectAutoPlayMove()`
+
+#### useDragAndDrop
+Manages drag-and-drop functionality:
+- Drag state tracking
+- Custom multi-card drag overlay
+- All drag event handlers
+- Global mouseup listeners for cleanup
+
+#### useAutoComplete
+Handles extended autocomplete:
+- Detects when all tableau cards are face-up
+- Automatically draws from stock
+- Moves cards to foundations
+- Manages autocomplete timeout
+
+### GameBoard
+Main game component composition:
+- Integrates all custom hooks
+- Card selection handling
+- Game mode toggles (deck count, draw count)
+- UI rendering and event coordination
 
 ### Card
 Renders individual card with:
@@ -200,12 +234,26 @@ interface GameState {
 - `src/components/VictoryAnimation.tsx` - Win celebration
 - `src/components/VictoryAnimation.css` - Animation styling
 
+### Hooks
+- `src/hooks/useGameState.ts` - Game state management, reducer, undo/redo
+- `src/hooks/useCardDimensions.ts` - Responsive card sizing
+- `src/hooks/useCardAnimation.ts` - Card animations and position tracking
+- `src/hooks/useDragAndDrop.ts` - Drag-and-drop functionality
+- `src/hooks/useAutoComplete.ts` - Extended autocomplete logic
+- `src/hooks/index.ts` - Centralized hook exports
+
 ### Game Logic
 - `src/game/klondikeLogic.ts` - All game rules and validation
 
 ### Types
 - `src/types/card.ts` - Card type and helper functions
 - `src/types/gameState.ts` - Game state type definition
+
+### Constants
+- `src/constants/animation.ts` - Animation timing and z-index values
+- `src/constants/layout.ts` - Layout dimensions and spacing
+- `src/constants/game.ts` - Game configuration values
+- `src/constants/index.ts` - Centralized constant exports
 
 ### Assets
 - `src/assets/cards/*.svg` - 52 card faces + 2 card backs
