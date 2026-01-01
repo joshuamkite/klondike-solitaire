@@ -407,3 +407,91 @@ export function autoPlay(state: GameState): GameState {
 
     return currentState;
 }
+
+// Check if all tableau cards are face-up
+export function allTableauCardsFaceUp(state: GameState): boolean {
+    return state.tableau.every(column =>
+        column.every(card => card.faceUp)
+    );
+}
+
+// Extended autocomplete: when all tableau cards are face-up, automatically draw from stock
+// and move cards to foundations until game is complete or no more moves possible
+// Returns the next action to take: 'draw' | 'move' | 'done'
+export function getNextAutoCompleteAction(state: GameState): {
+    action: 'draw' | 'move' | 'done';
+    newState?: GameState;
+    moveDetails?: {
+        fromPile: 'tableau' | 'waste';
+        fromIndex: number;
+        cardIndex: number;
+        toPile: 'foundation';
+        toIndex: number;
+    };
+} {
+    // Only autocomplete if all tableau cards are face-up
+    if (!allTableauCardsFaceUp(state) || state.gameWon) {
+        return { action: 'done' };
+    }
+
+    // Try to move a card to foundation first (prioritize waste, then tableau)
+    if (state.waste.length > 0) {
+        const card = state.waste[state.waste.length - 1];
+        const foundationIndex = findFoundationForCard(card, state.foundations);
+
+        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+            const newState = moveCards(state, 'waste', 0, state.waste.length - 1, 'foundation', foundationIndex);
+            if (newState) {
+                return {
+                    action: 'move',
+                    newState,
+                    moveDetails: {
+                        fromPile: 'waste',
+                        fromIndex: 0,
+                        cardIndex: state.waste.length - 1,
+                        toPile: 'foundation',
+                        toIndex: foundationIndex
+                    }
+                };
+            }
+        }
+    }
+
+    // Try tableau columns
+    for (let columnIndex = 0; columnIndex < state.tableau.length; columnIndex++) {
+        const column = state.tableau[columnIndex];
+        if (column.length === 0) continue;
+
+        const card = column[column.length - 1];
+        const foundationIndex = findFoundationForCard(card, state.foundations);
+
+        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+            const newState = moveCards(state, 'tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
+            if (newState) {
+                return {
+                    action: 'move',
+                    newState,
+                    moveDetails: {
+                        fromPile: 'tableau',
+                        fromIndex: columnIndex,
+                        cardIndex: column.length - 1,
+                        toPile: 'foundation',
+                        toIndex: foundationIndex
+                    }
+                };
+            }
+        }
+    }
+
+    // No moves available, try drawing from stock
+    if (state.stock.length > 0 || state.waste.length > 0) {
+        const newState = drawFromStock(state);
+        return {
+            action: 'draw',
+            newState
+        };
+    }
+
+    // No more actions possible
+    return { action: 'done' };
+}

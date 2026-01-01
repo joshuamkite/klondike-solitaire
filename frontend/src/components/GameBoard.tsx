@@ -11,6 +11,8 @@ import {
     moveCards,
     findFoundationForCard,
     autoPlaySingleCard,
+    getNextAutoCompleteAction,
+    allTableauCardsFaceUp,
 } from '../game/klondikeLogic';
 import './GameBoard.css';
 
@@ -447,55 +449,32 @@ export function GameBoard() {
         return () => window.removeEventListener('resize', handleResize);
     }, [deckCount]);
 
-    // Autocomplete: When stock and waste are empty and all cards are face-up,
-    // automatically move cards to foundations
+    // Extended Autocomplete: When all tableau cards are face-up, automatically draw from stock
+    // and move cards to foundations until game is complete
     useEffect(() => {
         // Clear any existing timeout
         if (autoCompleteTimeoutRef.current) {
             clearTimeout(autoCompleteTimeoutRef.current);
         }
 
-        // Check if we should autocomplete
-        const shouldAutoComplete =
-            gameState.stock.length === 0 &&
-            gameState.waste.length === 0 &&
-            !gameState.gameWon &&
-            gameState.tableau.every(column =>
-                column.every(card => card.faceUp)
-            );
+        // Check if we should autocomplete (all tableau cards face-up and not won)
+        if (!allTableauCardsFaceUp(gameState) || gameState.gameWon) {
+            return;
+        }
 
-        if (!shouldAutoComplete) return;
-
-        // Try to move a card to foundation with animation
+        // Process next autocomplete action
         autoCompleteTimeoutRef.current = window.setTimeout(() => {
-            let moved = false;
+            const action = getNextAutoCompleteAction(gameState);
 
-            // Try each tableau column
-            for (let columnIndex = 0; columnIndex < gameState.tableau.length && !moved; columnIndex++) {
-                const column = gameState.tableau[columnIndex];
-                if (column.length === 0) continue;
-
-                const card = column[column.length - 1];
-                // Find the correct foundation for this card based on suit
-                const foundationIndex = findFoundationForCard(card, gameState.foundations);
-
-                if (foundationIndex !== null) {
-                    const newState = moveCards(
-                        gameState,
-                        'tableau',
-                        columnIndex,
-                        column.length - 1,
-                        'foundation',
-                        foundationIndex
-                    );
-
-                    if (newState) {
-                        animateMove('tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
-                        moved = true;
-                        break;
-                    }
-                }
+            if (action.action === 'move' && action.newState && action.moveDetails) {
+                // Animate the card move
+                const { fromPile, fromIndex, cardIndex, toPile, toIndex } = action.moveDetails;
+                animateMove(fromPile, fromIndex, cardIndex, toPile, toIndex);
+            } else if (action.action === 'draw' && action.newState) {
+                // Draw from stock (no animation for stock draw)
+                updateGameStateImmediate(action.newState, true); // Skip auto-play to avoid conflicts
             }
+            // If action is 'done', do nothing (no more moves possible)
         }, 300); // Small delay for visual effect
 
         return () => {

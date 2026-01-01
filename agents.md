@@ -88,7 +88,7 @@ Main game component managing state with useReducer:
 - Card selection and drag-and-drop handlers
 - Undo functionality
 - Game mode toggles (deck count, draw count)
-- Autocomplete when stock/waste empty and all cards face-up
+- Extended autocomplete when all tableau cards face-up (automatically draws from stock and completes game)
 - Animation orchestration with `animateMove()` function
 - Position calculation utilities (`getCardPosition`, `getDestinationPosition`)
 - Auto-play move detection with `detectAutoPlayMove()`
@@ -129,6 +129,23 @@ Celebration overlay with:
 - `autoMoveToFoundation()` - Auto-moves card to appropriate foundation
 - `findFoundationForCard()` - Finds correct foundation for any card
 - `checkWin()` - Verifies all foundations have 13 cards
+- `allTableauCardsFaceUp()` - Checks if all tableau cards are face-up (triggers extended autocomplete)
+- `getNextAutoCompleteAction()` - Returns next action for extended autocomplete (move/draw/done)
+
+### Autocomplete System
+The game features two levels of autocomplete:
+
+1. **Standard Auto-play**: After any move, safe cards automatically move to foundations
+   - Uses `autoPlaySingleCard()` with FreeCell-style safety rules
+   - Only moves cards that won't block gameplay (conservative strategy)
+   - Continues recursively until no safe moves remain
+
+2. **Extended Autocomplete**: Activated when all tableau cards are face-up
+   - Automatically draws from stock/waste pile
+   - Moves all possible cards to foundations
+   - Cycles through: check for moves → move card → check for moves → draw from stock → repeat
+   - Continues until game is won or no more moves possible
+   - Provides smooth user experience by eliminating tedious endgame clicking
 
 ## Type Definitions
 
