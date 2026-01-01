@@ -38,8 +38,12 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 6. **Smart Foundation Drops**: Cards automatically go to the correct foundation
 7. **Multi-card Selection**: Visual highlighting of entire card sequences
 8. **Undo Functionality**: Step back through move history
-9. **Victory Animation**: Fireworks celebration with card suit particles
-10. **Move Counter**: Tracks number of moves made
+9. **Smooth Card Animations**: Cards visibly fly across the screen for all moves
+   - Manual moves, auto-play, and double-click all animated
+   - 300ms cubic-bezier transitions for natural motion
+   - Animated overlay system with high z-index rendering
+10. **Victory Animation**: Fireworks celebration with card suit particles
+11. **Move Counter**: Tracks number of moves made
 
 ## Development Commands
 - `bun install` - Install dependencies
@@ -85,6 +89,9 @@ Main game component managing state with useReducer:
 - Undo functionality
 - Game mode toggles (deck count, draw count)
 - Autocomplete when stock/waste empty and all cards face-up
+- Animation orchestration with `animateMove()` function
+- Position calculation utilities (`getCardPosition`, `getDestinationPosition`)
+- Auto-play move detection with `detectAutoPlayMove()`
 
 ### Card
 Renders individual card with:
@@ -92,6 +99,14 @@ Renders individual card with:
 - Different card backs for each deck (blue/red)
 - Drag-and-drop support
 - Click and double-click handlers
+
+### AnimatedCard
+Overlay component for smooth card movement animations:
+- Renders cards flying from source to destination positions
+- Uses CSS transforms with 300ms cubic-bezier transitions
+- Double `requestAnimationFrame` technique to ensure animations trigger
+- High z-index overlay rendering above game board
+- Triggers callback on animation completion
 
 ### VictoryAnimation
 Celebration overlay with:
@@ -163,6 +178,8 @@ interface GameState {
 - `src/components/Card.css` - Card styling
 - `src/components/GameBoard.tsx` - Main game logic and UI
 - `src/components/GameBoard.css` - Game board styling
+- `src/components/AnimatedCard.tsx` - Smooth card movement animations
+- `src/components/AnimatedCard.css` - Animation overlay styling
 - `src/components/VictoryAnimation.tsx` - Win celebration
 - `src/components/VictoryAnimation.css` - Animation styling
 
@@ -175,3 +192,90 @@ interface GameState {
 
 ### Assets
 - `src/assets/cards/*.svg` - 52 card faces + 2 card backs
+
+## Animation System
+
+### Overview
+The game features smooth, visible card animations for all types of moves:
+- Manual drag-and-drop moves
+- Click-to-select and click-to-move
+- Double-click auto-moves to foundations
+- Auto-play moves during autocomplete
+
+### Architecture
+
+#### AnimatedCard Component
+Located in `src/components/AnimatedCard.tsx`, this component:
+1. Receives card data and start/end positions as props
+2. Renders an overlay card positioned absolutely over the game board
+3. Uses CSS transforms to animate from start to end position
+4. Employs double `requestAnimationFrame` to ensure browser applies transitions
+5. Calls `onComplete` callback after animation duration (300ms)
+
+#### Animation State Management
+In `GameBoard.tsx`:
+- **`animatingCard`**: Tracks currently animating card and positions
+- **`gameStateRef`**: Ref to current state for async auto-play operations
+- **`animateMove()`**: Central function that orchestrates all animations
+
+#### Position Calculation
+Two key utility functions:
+1. **`getCardPosition(cardId)`**: Finds DOM element by card ID and returns `DOMRect`
+2. **`getDestinationPosition(destination)`**: Calculates target position based on current DOM state
+
+#### Animation Flow
+```
+User Action → animateMove() called
+  ↓
+Get source card position from DOM
+  ↓
+Validate move with klondikeLogic
+  ↓
+Calculate destination position
+  ↓
+Set animatingCard state (triggers AnimatedCard render)
+  ↓
+AnimatedCard animates for 300ms
+  ↓
+onComplete callback → update game state
+  ↓
+Animation cleared, card appears in new location
+```
+
+#### Auto-Play Integration
+Auto-play works through:
+1. `detectAutoPlayMove()` compares old and new states to identify moved card
+2. Finds moved card's source and destination
+3. Triggers animation before continuing to next auto-play move
+4. Uses `gameStateRef` to track state during async animations
+
+### Key Technical Patterns
+
+#### Double RequestAnimationFrame
+```typescript
+useEffect(() => {
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            setIsAnimating(true);
+        });
+    });
+}, []);
+```
+This ensures the browser has rendered the initial position before applying the transform, triggering the CSS transition.
+
+#### Async State Management
+```typescript
+const gameStateRef = useRef<GameState>(gameState);
+useEffect(() => {
+    gameStateRef.current = gameState;
+}, [gameState]);
+```
+During auto-play, animations are async. The ref ensures position calculations use the most current state.
+
+#### CSS Transitions
+```css
+.animated-card {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+```
+Smooth, natural motion with ease-in-out acceleration curve.
