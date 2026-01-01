@@ -1,4 +1,18 @@
 import { useState } from 'react';
+import {
+    VICTORY_PARTICLE_COUNT,
+    VICTORY_PARTICLE_SUITS,
+    FULL_CIRCLE_DEGREES,
+    VICTORY_ANGLE_RANDOMNESS_DEGREES,
+    VICTORY_ANGLE_OFFSET_DEGREES,
+    VICTORY_VELOCITY_BASE_PX,
+    VICTORY_VELOCITY_RANDOM_PX,
+    VICTORY_ROTATION_RANGE_DEGREES,
+    VICTORY_ROTATION_OFFSET_DEGREES,
+    VICTORY_DELAY_MAX_SECONDS,
+    SUIT_MODULO,
+    DEGREES_TO_RADIANS,
+} from '../constants';
 import './VictoryAnimation.css';
 
 interface Particle {
@@ -16,18 +30,18 @@ interface VictoryAnimationProps {
 
 export function VictoryAnimation({ onClose }: VictoryAnimationProps) {
     const [particles] = useState(() => {
-        const suits = ['♥', '♦', '♣', '♠'];
+        const suits = VICTORY_PARTICLE_SUITS;
         const newParticles: Particle[] = [];
 
-        // Create 60 particles (15 per suit) that burst like fireworks
-        for (let i = 0; i < 60; i++) {
+        // Create particles (evenly distributed per suit) that burst like fireworks
+        for (let i = 0; i < VICTORY_PARTICLE_COUNT; i++) {
             newParticles.push({
                 id: i,
-                suit: suits[i % 4],
-                angle: (i * 360 / 60) + (Math.random() * 20 - 10), // Evenly distributed with slight randomness
-                velocity: 300 + Math.random() * 400, // Increased velocity to reach screen edges
-                rotation: Math.random() * 720 - 360, // Random rotation
-                delay: Math.random() * 0.3 // Stagger the bursts slightly
+                suit: suits[i % SUIT_MODULO],
+                angle: (i * FULL_CIRCLE_DEGREES / VICTORY_PARTICLE_COUNT) + (Math.random() * VICTORY_ANGLE_RANDOMNESS_DEGREES - VICTORY_ANGLE_OFFSET_DEGREES),
+                velocity: VICTORY_VELOCITY_BASE_PX + Math.random() * VICTORY_VELOCITY_RANDOM_PX,
+                rotation: Math.random() * VICTORY_ROTATION_RANGE_DEGREES - VICTORY_ROTATION_OFFSET_DEGREES,
+                delay: Math.random() * VICTORY_DELAY_MAX_SECONDS
             });
         }
 
@@ -42,7 +56,7 @@ export function VictoryAnimation({ onClose }: VictoryAnimationProps) {
                 <div className="particles">
                     {particles.map(particle => {
                         // Calculate final position based on angle and velocity
-                        const radians = (particle.angle * Math.PI) / 180;
+                        const radians = particle.angle * DEGREES_TO_RADIANS;
                         const dx = Math.cos(radians) * particle.velocity;
                         const dy = Math.sin(radians) * particle.velocity;
 

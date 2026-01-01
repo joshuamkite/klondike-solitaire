@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Card as CardType } from '../types/card';
 import { Card } from './Card';
+import {
+    CARD_ANIMATION_DURATION_MS,
+    ANIMATED_CARD_Z_INDEX,
+    ANIMATION_EASING,
+    INITIAL_TRANSFORM,
+} from '../constants';
+import {
+    TABLEAU_CARD_OVERLAP_RATIO,
+    CARD_DEFAULT_HEIGHT_PX,
+} from '../constants';
 import './AnimatedCard.css';
 
 interface AnimatedCardProps {
@@ -16,7 +26,7 @@ export function AnimatedCard({
     startPos,
     endPos,
     onComplete,
-    duration = 300
+    duration = CARD_ANIMATION_DURATION_MS
 }: AnimatedCardProps) {
     const containerRef = useRef<HTMLDivElement>(null);
     const [isAnimating, setIsAnimating] = useState(false);
@@ -39,7 +49,7 @@ export function AnimatedCard({
 
     const transform = isAnimating
         ? `translate(${endPos.x - startPos.x}px, ${endPos.y - startPos.y}px)`
-        : 'translate(0, 0)';
+        : INITIAL_TRANSFORM;
 
     return (
         <div
@@ -49,10 +59,10 @@ export function AnimatedCard({
                 position: 'fixed',
                 left: startPos.x,
                 top: startPos.y,
-                zIndex: 1000,
+                zIndex: ANIMATED_CARD_Z_INDEX,
                 pointerEvents: 'none',
                 transform,
-                transition: `transform ${duration}ms cubic-bezier(0.4, 0, 0.2, 1)`,
+                transition: `transform ${duration}ms ${ANIMATION_EASING}`,
             }}
         >
             {cards.map((card, index) => (
@@ -60,7 +70,7 @@ export function AnimatedCard({
                     key={card.id}
                     card={card}
                     style={{
-                        marginTop: index === 0 ? '0' : `calc(var(--card-height, 140px) * -0.75)`
+                        marginTop: index === 0 ? '0' : `calc(var(--card-height, ${CARD_DEFAULT_HEIGHT_PX}px) * -${TABLEAU_CARD_OVERLAP_RATIO})`
                     }}
                 />
             ))}

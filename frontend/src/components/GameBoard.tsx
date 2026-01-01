@@ -14,6 +14,32 @@ import {
     getNextAutoCompleteAction,
     allTableauCardsFaceUp,
 } from '../game/klondikeLogic';
+import {
+    AUTO_PLAY_DELAY_MS,
+    AUTO_COMPLETE_DELAY_MS,
+    DRAG_OVERLAY_Z_INDEX,
+    DRAG_OVERLAY_TRANSFORM,
+    GAME_WIDTH_PERCENT,
+    MOBILE_BREAKPOINT_PX,
+    BOARD_PADDING_MOBILE_PX,
+    BOARD_PADDING_DESKTOP_PX,
+    CARD_GAP_PX,
+    CARD_MIN_WIDTH_PX,
+    CARD_ASPECT_RATIO,
+    CARD_DEFAULT_HEIGHT_PX,
+    CARD_DEFAULT_WIDTH_PX,
+    TABLEAU_CARD_OVERLAP_RATIO,
+    TABLEAU_CARD_VISIBLE_RATIO,
+    DRAG_OVERLAY_SPACING_RATIO,
+    TABLEAU_COLUMNS_ONE_DECK,
+    TABLEAU_COLUMNS_TWO_DECK,
+    FOUNDATION_SUIT_ORDER,
+    TRANSPARENT_PIXEL_DATA_URI,
+    INVALID_DRAG_COORDINATE,
+    DECK_ONE,
+    INITIAL_MOVE_COUNT,
+    SEQUENTIAL_RANK_DIFFERENCE,
+} from '../constants';
 import './GameBoard.css';
 
 // Reducer for managing game state and history
@@ -51,8 +77,8 @@ function gameReducer(state: GameReducerState, action: GameAction): GameReducerSt
 }
 
 export function GameBoard() {
-    const [deckCount, setDeckCount] = useState<1 | 2>(1);
-    const [drawCount, setDrawCount] = useState<1 | 3>(1);
+    const [deckCount, setDeckCount] = useState<1 | 2>(DECK_ONE);
+    const [drawCount, setDrawCount] = useState<1 | 3>(DECK_ONE);
     const [showLicense, setShowLicense] = useState(false);
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
@@ -136,10 +162,10 @@ export function GameBoard() {
                 const rect = lastCard.getBoundingClientRect();
 
                 // Calculate the position for the new card (below the last one)
-                const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || '140');
+                const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || `${CARD_DEFAULT_HEIGHT_PX}`);
                 return {
                     x: rect.left,
-                    y: rect.top + cardHeight * 0.25 // 75% overlap means 25% visible
+                    y: rect.top + cardHeight * TABLEAU_CARD_VISIBLE_RATIO // 75% overlap means 25% visible
                 };
             } else {
                 // Empty column - get the placeholder position
@@ -314,7 +340,7 @@ export function GameBoard() {
                         }
                     }
                     // If no card was moved, stop recursing
-                }, 700);
+                }, AUTO_PLAY_DELAY_MS);
             };
 
             autoPlayRecursive();
@@ -327,7 +353,7 @@ export function GameBoard() {
 
     const newGame = () => {
         // Warn if game is in progress (has moves and not won)
-        if (gameState.moves > 0 && !gameState.gameWon) {
+        if (gameState.moves > INITIAL_MOVE_COUNT && !gameState.gameWon) {
             const confirmed = window.confirm(
                 'Starting a new game will lose your current progress. Are you sure?'
             );
@@ -345,7 +371,7 @@ export function GameBoard() {
         if (newCount === deckCount) return;
 
         // Warn if game is in progress (has moves and not won)
-        if (gameState.moves > 0 && !gameState.gameWon) {
+        if (gameState.moves > INITIAL_MOVE_COUNT && !gameState.gameWon) {
             const confirmed = window.confirm(
                 `Changing to ${newCount} deck${newCount > 1 ? 's' : ''} will start a new game and lose your current progress. Continue?`
             );
@@ -363,7 +389,7 @@ export function GameBoard() {
         if (newCount === drawCount) return;
 
         // Warn if game is in progress (has moves and not won)
-        if (gameState.moves > 0 && !gameState.gameWon) {
+        if (gameState.moves > INITIAL_MOVE_COUNT && !gameState.gameWon) {
             const confirmed = window.confirm(
                 `Changing to draw ${newCount} will start a new game and lose your current progress. Continue?`
             );
@@ -388,7 +414,7 @@ export function GameBoard() {
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             // Only warn if game is in progress (has moves and not won)
-            if (gameState.moves > 0 && !gameState.gameWon) {
+            if (gameState.moves > INITIAL_MOVE_COUNT && !gameState.gameWon) {
                 e.preventDefault();
                 // Modern browsers require returnValue to be set
                 e.returnValue = '';
@@ -405,30 +431,30 @@ export function GameBoard() {
         const calculateCardDimensions = () => {
             if (!gameBoardRef.current || !gameAreaRef.current) return;
 
-            const boardPadding = window.innerWidth < 768 ? 10 : 20;
+            const boardPadding = window.innerWidth < MOBILE_BREAKPOINT_PX ? BOARD_PADDING_MOBILE_PX : BOARD_PADDING_DESKTOP_PX;
 
             // Desktop game width: Change this value to adjust game width (0.6 = 60%, 0.7 = 70%, 0.8 = 80%)
-            const gameWidthPercent = 0.65;
+            const gameWidthPercent = GAME_WIDTH_PERCENT;
 
             const viewportWidth = window.innerWidth - (boardPadding * 2);
             const availableWidth = viewportWidth * gameWidthPercent;
 
             // Gap between cards
-            const cardGap = 10;
+            const cardGap = CARD_GAP_PX;
 
             // Tableau: 7 columns for 1 deck, 9 columns for 2 decks
-            const tableauItems = deckCount === 1 ? 7 : 9;
-            const tableauGaps = tableauItems - 1;
+            const tableauItems = deckCount === DECK_ONE ? TABLEAU_COLUMNS_ONE_DECK : TABLEAU_COLUMNS_TWO_DECK;
+            const tableauGaps = tableauItems - SEQUENTIAL_RANK_DIFFERENCE;
 
             // Calculate card width to fill available space
             let cardWidth = (availableWidth - (tableauGaps * cardGap)) / tableauItems;
 
             // Set reasonable bounds (minimum 60px)
-            const minWidth = 60;
+            const minWidth = CARD_MIN_WIDTH_PX;
             cardWidth = Math.max(minWidth, cardWidth);
 
             // Maintain 5:7 aspect ratio (width:height)
-            const cardHeight = cardWidth * 1.4;
+            const cardHeight = cardWidth * CARD_ASPECT_RATIO;
 
             // Set CSS custom properties
             gameBoardRef.current.style.setProperty('--card-width', `${cardWidth}px`);
@@ -475,7 +501,7 @@ export function GameBoard() {
                 updateGameStateImmediate(action.newState, true); // Skip auto-play to avoid conflicts
             }
             // If action is 'done', do nothing (no more moves possible)
-        }, 300); // Small delay for visual effect
+        }, AUTO_COMPLETE_DELAY_MS); // Small delay for visual effect
 
         return () => {
             if (autoCompleteTimeoutRef.current) {
@@ -509,27 +535,27 @@ export function GameBoard() {
     };
 
     const handleWasteClick = () => {
-        if (gameState.waste.length === 0) return;
+        if (gameState.waste.length === INITIAL_MOVE_COUNT) return;
 
         if (selectedCard) {
             setSelectedCard(null);
         } else {
             setSelectedCard({
                 fromPile: 'waste',
-                fromIndex: 0,
-                cardIndex: gameState.waste.length - 1,
+                fromIndex: INITIAL_MOVE_COUNT,
+                cardIndex: gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE,
             });
         }
     };
 
     const handleWasteDoubleClick = () => {
-        if (gameState.waste.length === 0) return;
+        if (gameState.waste.length === INITIAL_MOVE_COUNT) return;
 
-        const card = gameState.waste[gameState.waste.length - 1];
+        const card = gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE];
         const targetFoundationIndex = findFoundationForCard(card, gameState.foundations);
 
         if (targetFoundationIndex !== null) {
-            animateMove('waste', 0, gameState.waste.length - 1, 'foundation', targetFoundationIndex);
+            animateMove('waste', INITIAL_MOVE_COUNT, gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE, 'foundation', targetFoundationIndex);
             setSelectedCard(null);
         }
     };
@@ -563,13 +589,13 @@ export function GameBoard() {
 
     const handleTableauDoubleClick = (columnIndex: number) => {
         const column = gameState.tableau[columnIndex];
-        if (column.length === 0) return;
+        if (column.length === INITIAL_MOVE_COUNT) return;
 
-        const card = column[column.length - 1];
+        const card = column[column.length - SEQUENTIAL_RANK_DIFFERENCE];
         const targetFoundationIndex = findFoundationForCard(card, gameState.foundations);
 
         if (targetFoundationIndex !== null) {
-            animateMove('tableau', columnIndex, column.length - 1, 'foundation', targetFoundationIndex);
+            animateMove('tableau', columnIndex, column.length - SEQUENTIAL_RANK_DIFFERENCE, 'foundation', targetFoundationIndex);
             setSelectedCard(null);
         }
     };
@@ -581,7 +607,7 @@ export function GameBoard() {
             // Get the card being moved
             let card: CardType;
             if (selectedCard.fromPile === 'waste') {
-                card = gameState.waste[gameState.waste.length - 1];
+                card = gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE];
             } else if (selectedCard.fromPile === 'foundation') {
                 card = gameState.foundations[selectedCard.fromIndex][selectedCard.cardIndex];
             } else {
@@ -600,12 +626,12 @@ export function GameBoard() {
                 );
             }
             setSelectedCard(null);
-        } else if (foundation.length > 0) {
+        } else if (foundation.length > INITIAL_MOVE_COUNT) {
             // Select the top card from this foundation
             setSelectedCard({
                 fromPile: 'foundation',
                 fromIndex: foundationIndex,
-                cardIndex: foundation.length - 1,
+                cardIndex: foundation.length - SEQUENTIAL_RANK_DIFFERENCE,
             });
         }
     };
@@ -638,11 +664,11 @@ export function GameBoard() {
             const column = gameState.tableau[fromIndex];
             const cardsBeingDragged = column.slice(cardIndex);
 
-            if (cardsBeingDragged.length > 1) {
+            if (cardsBeingDragged.length > SEQUENTIAL_RANK_DIFFERENCE) {
                 // Use a transparent 1x1 pixel as the drag image to hide browser's default
                 const transparentImg = new Image();
-                transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
-                e.dataTransfer.setDragImage(transparentImg, 0, 0);
+                transparentImg.src = TRANSPARENT_PIXEL_DATA_URI;
+                e.dataTransfer.setDragImage(transparentImg, INITIAL_MOVE_COUNT, INITIAL_MOVE_COUNT);
 
                 // Set up our custom overlay
                 setDragOverlay({
@@ -658,7 +684,7 @@ export function GameBoard() {
         // Update overlay position if it exists and we have valid coordinates
         // Note: browsers may send 0,0 on the final drag event before dragend
         if (dragOverlay) {
-            if (e.clientX !== 0 || e.clientY !== 0) {
+            if (e.clientX !== INVALID_DRAG_COORDINATE || e.clientY !== INVALID_DRAG_COORDINATE) {
                 setDragOverlay(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
             }
         }
@@ -702,7 +728,7 @@ export function GameBoard() {
         // Get the card being dragged
         let card: CardType;
         if (draggedCard.fromPile === 'waste') {
-            card = gameState.waste[gameState.waste.length - 1];
+            card = gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE];
         } else if (draggedCard.fromPile === 'foundation') {
             card = gameState.foundations[draggedCard.fromIndex][draggedCard.cardIndex];
         } else {
@@ -737,10 +763,10 @@ export function GameBoard() {
         if (!selectedCard) return false;
 
         if (selectedCard.fromPile === 'waste') {
-            return gameState.waste.length > 0 && gameState.waste[gameState.waste.length - 1].id === card.id;
+            return gameState.waste.length > INITIAL_MOVE_COUNT && gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
         } else if (selectedCard.fromPile === 'foundation') {
             const foundation = gameState.foundations[selectedCard.fromIndex];
-            return foundation.length > 0 && foundation[foundation.length - 1].id === card.id;
+            return foundation.length > INITIAL_MOVE_COUNT && foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
         } else {
             // For tableau, check if card is part of the selected sequence
             const column = gameState.tableau[selectedCard.fromIndex];
@@ -757,10 +783,10 @@ export function GameBoard() {
         if (!draggedCard) return false;
 
         if (draggedCard.fromPile === 'waste') {
-            return gameState.waste.length > 0 && gameState.waste[gameState.waste.length - 1].id === card.id;
+            return gameState.waste.length > INITIAL_MOVE_COUNT && gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
         } else if (draggedCard.fromPile === 'foundation') {
             const foundation = gameState.foundations[draggedCard.fromIndex];
-            return foundation.length > 0 && foundation[foundation.length - 1].id === card.id;
+            return foundation.length > INITIAL_MOVE_COUNT && foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE].id === card.id;
         } else {
             // For tableau, check if card is part of the dragged sequence
             const column = gameState.tableau[draggedCard.fromIndex];
@@ -783,7 +809,7 @@ export function GameBoard() {
                 </div>
 
                 <div className="game-controls">
-                    <button onClick={undo} disabled={history.length === 0}>
+                    <button onClick={undo} disabled={history.length === INITIAL_MOVE_COUNT}>
                         Undo
                     </button>
 
@@ -791,15 +817,15 @@ export function GameBoard() {
                         <label>Decks:</label>
                         <div className="toggle-switch">
                             <span
-                                className={deckCount === 1 ? 'active' : ''}
-                                onClick={() => handleDeckCountChange(1)}
+                                className={deckCount === DECK_ONE ? 'active' : ''}
+                                onClick={() => handleDeckCountChange(DECK_ONE)}
                                 style={{ cursor: 'pointer' }}
                             >1</span>
                             <label className="switch">
                                 <input
                                     type="checkbox"
                                     checked={deckCount === 2}
-                                    onChange={() => handleDeckCountChange(deckCount === 1 ? 2 : 1)}
+                                    onChange={() => handleDeckCountChange(deckCount === DECK_ONE ? 2 : DECK_ONE)}
                                 />
                                 <span className="slider"></span>
                             </label>
@@ -815,15 +841,15 @@ export function GameBoard() {
                         <label>Draw:</label>
                         <div className="toggle-switch">
                             <span
-                                className={drawCount === 1 ? 'active' : ''}
-                                onClick={() => handleDrawCountChange(1)}
+                                className={drawCount === DECK_ONE ? 'active' : ''}
+                                onClick={() => handleDrawCountChange(DECK_ONE)}
                                 style={{ cursor: 'pointer' }}
                             >1</span>
                             <label className="switch">
                                 <input
                                     type="checkbox"
                                     checked={drawCount === 3}
-                                    onChange={() => handleDrawCountChange(drawCount === 1 ? 3 : 1)}
+                                    onChange={() => handleDrawCountChange(drawCount === DECK_ONE ? 3 : DECK_ONE)}
                                 />
                                 <span className="slider"></span>
                             </label>
@@ -848,9 +874,9 @@ export function GameBoard() {
                             className="stock cell"
                             onClick={handleStockClick}
                         >
-                            {gameState.stock.length > 0 ? (
+                            {gameState.stock.length > INITIAL_MOVE_COUNT ? (
                                 <Card
-                                    card={gameState.stock[gameState.stock.length - 1]}
+                                    card={gameState.stock[gameState.stock.length - SEQUENTIAL_RANK_DIFFERENCE]}
                                 />
                             ) : (
                                 <div className="card-placeholder empty-stock">↻</div>
@@ -863,12 +889,12 @@ export function GameBoard() {
                             onClick={handleWasteClick}
                             onDoubleClick={handleWasteDoubleClick}
                         >
-                            {gameState.waste.length > 0 ? (
+                            {gameState.waste.length > INITIAL_MOVE_COUNT ? (
                                 <Card
-                                    card={gameState.waste[gameState.waste.length - 1]}
-                                    className={`${isCardSelected(gameState.waste[gameState.waste.length - 1]) ? 'selected' : ''} ${isCardDragging(gameState.waste[gameState.waste.length - 1]) ? 'dragging' : ''}`}
+                                    card={gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]}
+                                    className={`${isCardSelected(gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]) ? 'selected' : ''} ${isCardDragging(gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]) ? 'dragging' : ''}`}
                                     draggable={true}
-                                    onDragStart={(e) => handleDragStart(e, 'waste', 0, gameState.waste.length - 1)}
+                                    onDragStart={(e) => handleDragStart(e, 'waste', INITIAL_MOVE_COUNT, gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                     onDragEnd={handleDragEnd}
                                 />
                             ) : (
@@ -880,10 +906,10 @@ export function GameBoard() {
                     {/* Foundations - Fixed order: HCDS (Hearts, Clubs, Diamonds, Spades) */}
                     <div className={`foundations ${deckCount === 2 ? 'two-deck' : ''}`}>
                         {gameState.foundations.map((foundation, index) => {
-                            const topCard = foundation[foundation.length - 1];
+                            const topCard = foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE];
                             // Fixed suit order: HCDS (Hearts, Clubs, Diamonds, Spades)
                             // For 2-deck mode: top row (0-3), bottom row (4-7)
-                            const suits = ['hearts', 'clubs', 'diamonds', 'spades', 'hearts', 'clubs', 'diamonds', 'spades'];
+                            const suits = [...FOUNDATION_SUIT_ORDER, ...FOUNDATION_SUIT_ORDER];
                             const suitName = suits[index];
                             return (
                                 <div
@@ -897,7 +923,7 @@ export function GameBoard() {
                                         <Card
                                             card={topCard}
                                             draggable={true}
-                                            onDragStart={(e) => handleDragStart(e, 'foundation', index, foundation.length - 1)}
+                                            onDragStart={(e) => handleDragStart(e, 'foundation', index, foundation.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                             onDragEnd={handleDragEnd}
                                             className={`${isCardSelected(topCard) ? 'selected' : ''} ${isCardDragging(topCard) ? 'dragging' : ''}`}
                                         />
@@ -919,7 +945,7 @@ export function GameBoard() {
                                 onDragOver={handleDragOver}
                                 onDrop={(e) => handleDropOnTableau(e, columnIndex)}
                             >
-                                {column.length === 0 ? (
+                                {column.length === INITIAL_MOVE_COUNT ? (
                                     <div
                                         className="card-placeholder"
                                         onClick={() => handleEmptyTableauClick(columnIndex)}
@@ -930,11 +956,11 @@ export function GameBoard() {
                                             key={card.id}
                                             card={card}
                                             onClick={() => handleTableauCardClick(columnIndex, cardIndex)}
-                                            onDoubleClick={() => cardIndex === column.length - 1 && handleTableauDoubleClick(columnIndex)}
+                                            onDoubleClick={() => cardIndex === column.length - SEQUENTIAL_RANK_DIFFERENCE && handleTableauDoubleClick(columnIndex)}
                                             className={`${isCardSelected(card) ? 'selected' : ''} ${isCardDragging(card) ? 'dragging' : ''}`}
                                             style={{
                                                 // Tableau card overlap: -0.75 = 75% overlap. Adjust value between 0 (no overlap) and -1 (100% overlap)
-                                                marginTop: cardIndex === 0 ? '0' : `calc(var(--card-height, 140px) * -0.75)`
+                                                marginTop: cardIndex === INITIAL_MOVE_COUNT ? '0' : `calc(var(--card-height, ${CARD_DEFAULT_HEIGHT_PX}px) * -${TABLEAU_CARD_OVERLAP_RATIO})`
                                             }}
                                             draggable={card.faceUp}
                                             onDragStart={(e) => handleDragStart(e, 'tableau', columnIndex, cardIndex)}
@@ -1001,8 +1027,8 @@ export function GameBoard() {
                         left: dragOverlay.x,
                         top: dragOverlay.y,
                         pointerEvents: 'none',
-                        zIndex: 10000,
-                        transform: 'translate(-50%, -50%)',
+                        zIndex: DRAG_OVERLAY_Z_INDEX,
+                        transform: DRAG_OVERLAY_TRANSFORM,
                     }}
                 >
                     <div style={{ position: 'relative' }}>
@@ -1011,9 +1037,9 @@ export function GameBoard() {
                                 key={card.id}
                                 style={{
                                     position: 'absolute',
-                                    top: `calc(${index} * var(--card-height, 140px) * 0.25)`,
-                                    left: 0,
-                                    width: 'var(--card-width, 100px)',
+                                    top: `calc(${index} * var(--card-height, ${CARD_DEFAULT_HEIGHT_PX}px) * ${DRAG_OVERLAY_SPACING_RATIO})`,
+                                    left: INITIAL_MOVE_COUNT,
+                                    width: `var(--card-width, ${CARD_DEFAULT_WIDTH_PX}px)`,
                                     height: 'var(--card-height, 140px)',
                                 }}
                             >
