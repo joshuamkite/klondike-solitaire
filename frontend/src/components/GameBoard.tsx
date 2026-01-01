@@ -80,6 +80,13 @@ export function GameBoard() {
         cardIndex: number;
     } | null>(null);
 
+    // Custom drag overlay state for multi-card sequences
+    const [dragOverlay, setDragOverlay] = useState<{
+        cards: CardType[];
+        x: number;
+        y: number;
+    } | null>(null);
+
     // Animation state
     const [animatingCards, setAnimatingCards] = useState<{
         cards: CardType[];
@@ -498,6 +505,24 @@ export function GameBoard() {
         };
     }, [gameState]);
 
+    // Fail-safe: Clear drag overlay on any mouseup event globally
+    useEffect(() => {
+        const handleGlobalMouseUp = () => {
+            if (dragOverlay) {
+                setDragOverlay(null);
+                setDraggedCard(null);
+            }
+        };
+
+        document.addEventListener('mouseup', handleGlobalMouseUp);
+        document.addEventListener('dragend', handleGlobalMouseUp);
+
+        return () => {
+            document.removeEventListener('mouseup', handleGlobalMouseUp);
+            document.removeEventListener('dragend', handleGlobalMouseUp);
+        };
+    }, [dragOverlay]);
+
     const handleStockClick = () => {
         const newState = drawFromStock(gameState);
         updateGameState(newState);
@@ -628,10 +653,42 @@ export function GameBoard() {
         setDraggedCard({ fromPile, fromIndex, cardIndex });
         setSelectedCard(null); // Clear click-based selection when dragging
         e.dataTransfer.effectAllowed = 'move';
+
+        // For multi-card sequences, set up custom drag overlay
+        if (fromPile === 'tableau') {
+            const column = gameState.tableau[fromIndex];
+            const cardsBeingDragged = column.slice(cardIndex);
+
+            if (cardsBeingDragged.length > 1) {
+                // Use a transparent 1x1 pixel as the drag image to hide browser's default
+                const transparentImg = new Image();
+                transparentImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+                e.dataTransfer.setDragImage(transparentImg, 0, 0);
+
+                // Set up our custom overlay
+                setDragOverlay({
+                    cards: cardsBeingDragged,
+                    x: e.clientX,
+                    y: e.clientY
+                });
+            }
+        }
+    };
+
+    const handleDrag = (e: React.DragEvent) => {
+        // Update overlay position if it exists and we have valid coordinates
+        // Note: browsers may send 0,0 on the final drag event before dragend
+        if (dragOverlay) {
+            if (e.clientX !== 0 || e.clientY !== 0) {
+                setDragOverlay(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
+            }
+        }
     };
 
     const handleDragEnd = () => {
+        // Always clear both dragged card and overlay states
         setDraggedCard(null);
+        setDragOverlay(null);
     };
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -656,6 +713,7 @@ export function GameBoard() {
             updateGameState(newState);
         }
         setDraggedCard(null);
+        setDragOverlay(null); // Ensure overlay is cleared on drop
     };
 
     const handleDropOnFoundation = (e: React.DragEvent) => {
@@ -676,6 +734,7 @@ export function GameBoard() {
         const foundationIndex = findFoundationForCard(card, gameState.foundations);
         if (foundationIndex === null) {
             setDraggedCard(null);
+            setDragOverlay(null); // Ensure overlay is cleared
             return;
         }
 
@@ -692,6 +751,7 @@ export function GameBoard() {
             updateGameState(newState);
         }
         setDraggedCard(null);
+        setDragOverlay(null); // Ensure overlay is cleared on drop
     };
 
     const isCardSelected = (card: CardType): boolean => {
@@ -711,6 +771,26 @@ export function GameBoard() {
 
             // Card is selected if it's at or after the selected index in the same column
             return cardIndexInColumn >= selectedCard.cardIndex && cardIndexInColumn < column.length;
+        }
+    };
+
+    const isCardDragging = (card: CardType): boolean => {
+        if (!draggedCard) return false;
+
+        if (draggedCard.fromPile === 'waste') {
+            return gameState.waste.length > 0 && gameState.waste[gameState.waste.length - 1].id === card.id;
+        } else if (draggedCard.fromPile === 'foundation') {
+            const foundation = gameState.foundations[draggedCard.fromIndex];
+            return foundation.length > 0 && foundation[foundation.length - 1].id === card.id;
+        } else {
+            // For tableau, check if card is part of the dragged sequence
+            const column = gameState.tableau[draggedCard.fromIndex];
+
+            // Find the card in the column
+            const cardIndexInColumn = column.findIndex(c => c.id === card.id);
+
+            // Card is being dragged if it's at or after the dragged index in the same column
+            return cardIndexInColumn >= draggedCard.cardIndex && cardIndexInColumn < column.length;
         }
     };
 
@@ -807,7 +887,7 @@ export function GameBoard() {
                             {gameState.waste.length > 0 ? (
                                 <Card
                                     card={gameState.waste[gameState.waste.length - 1]}
-                                    className={isCardSelected(gameState.waste[gameState.waste.length - 1]) ? 'selected' : ''}
+                                    className={`${isCardSelected(gameState.waste[gameState.waste.length - 1]) ? 'selected' : ''} ${isCardDragging(gameState.waste[gameState.waste.length - 1]) ? 'dragging' : ''}`}
                                     draggable={true}
                                     onDragStart={(e) => handleDragStart(e, 'waste', 0, gameState.waste.length - 1)}
                                     onDragEnd={handleDragEnd}
@@ -840,7 +920,7 @@ export function GameBoard() {
                                             draggable={true}
                                             onDragStart={(e) => handleDragStart(e, 'foundation', index, foundation.length - 1)}
                                             onDragEnd={handleDragEnd}
-                                            className={isCardSelected(topCard) ? 'selected' : ''}
+                                            className={`${isCardSelected(topCard) ? 'selected' : ''} ${isCardDragging(topCard) ? 'dragging' : ''}`}
                                         />
                                     ) : (
                                         <div className="card-placeholder"></div>
@@ -872,13 +952,14 @@ export function GameBoard() {
                                             card={card}
                                             onClick={() => handleTableauCardClick(columnIndex, cardIndex)}
                                             onDoubleClick={() => cardIndex === column.length - 1 && handleTableauDoubleClick(columnIndex)}
-                                            className={isCardSelected(card) ? 'selected' : ''}
+                                            className={`${isCardSelected(card) ? 'selected' : ''} ${isCardDragging(card) ? 'dragging' : ''}`}
                                             style={{
                                                 // Tableau card overlap: -0.75 = 75% overlap. Adjust value between 0 (no overlap) and -1 (100% overlap)
                                                 marginTop: cardIndex === 0 ? '0' : `calc(var(--card-height, 140px) * -0.75)`
                                             }}
                                             draggable={card.faceUp}
                                             onDragStart={(e) => handleDragStart(e, 'tableau', columnIndex, cardIndex)}
+                                            onDrag={handleDrag}
                                             onDragEnd={handleDragEnd}
                                         />
                                     ))
@@ -931,6 +1012,37 @@ export function GameBoard() {
                     endPos={animatingCards.endPos}
                     onComplete={animatingCards.onComplete}
                 />
+            )}
+
+            {/* Custom drag overlay for multi-card sequences */}
+            {dragOverlay && (
+                <div
+                    style={{
+                        position: 'fixed',
+                        left: dragOverlay.x,
+                        top: dragOverlay.y,
+                        pointerEvents: 'none',
+                        zIndex: 10000,
+                        transform: 'translate(-50%, -50%)',
+                    }}
+                >
+                    <div style={{ position: 'relative' }}>
+                        {dragOverlay.cards.map((card, index) => (
+                            <div
+                                key={card.id}
+                                style={{
+                                    position: 'absolute',
+                                    top: `calc(${index} * var(--card-height, 140px) * 0.25)`,
+                                    left: 0,
+                                    width: 'var(--card-width, 100px)',
+                                    height: 'var(--card-height, 140px)',
+                                }}
+                            >
+                                <Card card={card} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
             )}
         </div>
     );

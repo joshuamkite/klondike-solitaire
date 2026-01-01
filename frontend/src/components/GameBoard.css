@@ -283,6 +283,9 @@ input:checked+.slider:hover {
 
 .foundation {
     position: relative;
+    /* Expand the drop zone to make drops easier */
+    padding: calc(var(--card-height, 140px) * 0.1);
+    margin: calc(var(--card-height, 140px) * -0.1);
 }
 
 .tableau {
@@ -298,17 +301,20 @@ input:checked+.slider:hover {
 }
 
 .tableau-column {
-    min-height: calc(var(--card-height, 140px) * 2.5);
+    min-height: calc(var(--card-height, 140px) * 3.5);
 }
 
 
 .column-drop-zone {
-    min-height: calc(var(--card-height, 140px) * 2.5);
+    min-height: calc(var(--card-height, 140px) * 3.5);
     border-radius: calc(var(--card-width, 100px) * 0.06);
     transition: background-color 0.2s;
     display: flex;
     flex-direction: column;
     align-items: center;
+    /* Expand the drop zone with padding to make drops easier */
+    padding: calc(var(--card-height, 140px) * 0.15) 0;
+    margin: calc(var(--card-height, 140px) * -0.15) 0;
 }
 
 /* Footer */
