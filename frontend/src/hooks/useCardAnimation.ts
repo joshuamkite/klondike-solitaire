@@ -16,13 +16,16 @@ interface AnimatingCardsState {
 
 export function useCardAnimation(
     gameState: GameState,
-    updateGameStateImmediate: (newState: GameState, skipAutoPlay?: boolean) => void
+    updateGameStateImmediate: (newState: GameState, skipAutoPlay?: boolean) => void,
+    cardRefs: React.MutableRefObject<Map<string, HTMLDivElement>>,
+    foundationRefs: React.MutableRefObject<(HTMLDivElement | null)[]>,
+    tableauRefs: React.MutableRefObject<(HTMLDivElement | null)[]>
 ) {
     const [animatingCards, setAnimatingCards] = useState<AnimatingCardsState | null>(null);
 
-    // Helper function to get card element position
+    // Helper function to get card element position using refs
     const getCardPosition = (cardId: string): { x: number; y: number } | null => {
-        const element = document.querySelector(`[data-card-id="${cardId}"]`) as HTMLElement;
+        const element = cardRefs.current.get(cardId);
         if (!element) return null;
 
         const rect = element.getBoundingClientRect();
@@ -32,46 +35,46 @@ export function useCardAnimation(
         };
     };
 
-    // Helper to get the destination element position (uses current DOM state, not future state)
+    // Helper to get the destination element position using refs (uses current DOM state, not future state)
     const getDestinationPosition = (
         toPile: 'tableau' | 'foundation',
         toIndex: number
     ): { x: number; y: number } | null => {
         if (toPile === 'foundation') {
-            // Find the foundation cell
-            const foundationCells = document.querySelectorAll('.foundation');
-            const targetCell = foundationCells[toIndex] as HTMLElement;
+            // Find the foundation cell using ref
+            const targetCell = foundationRefs.current[toIndex];
             if (!targetCell) return null;
 
             const rect = targetCell.getBoundingClientRect();
             return { x: rect.left, y: rect.top };
         } else {
-            // Tableau column - find the current last card in DOM
-            const tableauColumns = document.querySelectorAll('.tableau-column');
-            const targetColumn = tableauColumns[toIndex] as HTMLElement;
+            // Tableau column - find the current last card in the column
+            const targetColumn = tableauRefs.current[toIndex];
             if (!targetColumn) return null;
 
-            // Look for cards in this column
-            const cards = targetColumn.querySelectorAll('.card');
-            if (cards.length > 0) {
-                // Get the last card's position
-                const lastCard = cards[cards.length - 1] as HTMLElement;
-                const rect = lastCard.getBoundingClientRect();
+            // Get the current state's tableau column to find cards
+            const column = gameState.tableau[toIndex];
 
-                // Calculate the position for the new card (below the last one)
-                const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || `${CARD_DEFAULT_HEIGHT_PX}`);
-                return {
-                    x: rect.left,
-                    y: rect.top + cardHeight * TABLEAU_CARD_VISIBLE_RATIO // 75% overlap means 25% visible
-                };
-            } else {
-                // Empty column - get the placeholder position
-                const placeholder = targetColumn.querySelector('.card-placeholder') as HTMLElement;
-                if (!placeholder) return null;
+            if (column.length > 0) {
+                // Get the last card's ID and find its position
+                const lastCard = column[column.length - 1];
+                const lastCardElement = cardRefs.current.get(lastCard.id);
 
-                const rect = placeholder.getBoundingClientRect();
-                return { x: rect.left, y: rect.top };
+                if (lastCardElement) {
+                    const rect = lastCardElement.getBoundingClientRect();
+
+                    // Calculate the position for the new card (below the last one)
+                    const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || `${CARD_DEFAULT_HEIGHT_PX}`);
+                    return {
+                        x: rect.left,
+                        y: rect.top + cardHeight * TABLEAU_CARD_VISIBLE_RATIO // 75% overlap means 25% visible
+                    };
+                }
             }
+
+            // Empty column - get the column's position (placeholder)
+            const rect = targetColumn.getBoundingClientRect();
+            return { x: rect.left, y: rect.top };
         }
     };
 
