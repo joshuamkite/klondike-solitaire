@@ -40,6 +40,11 @@ export function GameBoard() {
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
 
+    // Refs for card animations - replace DOM queries with React refs
+    const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+    const foundationRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const tableauRefs = useRef<(HTMLDivElement | null)[]>([]);
+
     // Custom hooks
     const {
         gameState,
@@ -66,9 +71,15 @@ export function GameBoard() {
         animatingCards,
         animateMove,
         detectAutoPlayMove,
-    } = useCardAnimation(gameState, (newState: GameState, skipAutoPlay?: boolean) => {
-        updateGameStateImmediateRef.current(newState, skipAutoPlay);
-    });
+    } = useCardAnimation(
+        gameState,
+        (newState: GameState, skipAutoPlay?: boolean) => {
+            updateGameStateImmediateRef.current(newState, skipAutoPlay);
+        },
+        cardRefs,
+        foundationRefs,
+        tableauRefs
+    );
 
     // Enhanced update function with auto-play
     const updateGameStateImmediate = (newState: GameState, skipAutoPlay: boolean = false) => {
@@ -136,6 +147,15 @@ export function GameBoard() {
 
     // Auto-complete hook
     useAutoComplete(gameState, animateMove, updateGameStateImmediate);
+
+    // Helper to create card ref callback
+    const createCardRef = (cardId: string) => (element: HTMLDivElement | null) => {
+        if (element) {
+            cardRefs.current.set(cardId, element);
+        } else {
+            cardRefs.current.delete(cardId);
+        }
+    };
 
     const newGame = () => {
         // Warn if game is in progress (has moves and not won)
@@ -440,6 +460,7 @@ export function GameBoard() {
                             {gameState.stock.length > INITIAL_MOVE_COUNT ? (
                                 <Card
                                     card={gameState.stock[gameState.stock.length - SEQUENTIAL_RANK_DIFFERENCE]}
+                                    cardRef={createCardRef(gameState.stock[gameState.stock.length - SEQUENTIAL_RANK_DIFFERENCE].id)}
                                 />
                             ) : (
                                 <div className="card-placeholder empty-stock">↻</div>
@@ -459,6 +480,7 @@ export function GameBoard() {
                                     draggable={true}
                                     onDragStart={(e) => handleDragStartWithClear(e, 'waste', INITIAL_MOVE_COUNT, gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                     onDragEnd={handleDragEnd}
+                                    cardRef={createCardRef(gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE].id)}
                                 />
                             ) : (
                                 <div className="card-placeholder"></div>
@@ -477,6 +499,7 @@ export function GameBoard() {
                             return (
                                 <div
                                     key={index}
+                                    ref={(el) => { foundationRefs.current[index] = el; }}
                                     className={`cell foundation foundation-${suitName}`}
                                     onClick={() => handleFoundationClick(index)}
                                     onDragOver={handleDragOver}
@@ -489,6 +512,7 @@ export function GameBoard() {
                                             onDragStart={(e) => handleDragStartWithClear(e, 'foundation', index, foundation.length - SEQUENTIAL_RANK_DIFFERENCE)}
                                             onDragEnd={handleDragEnd}
                                             className={`${isCardSelected(topCard) ? 'selected' : ''} ${isCardDragging(topCard) ? 'dragging' : ''}`}
+                                            cardRef={createCardRef(topCard.id)}
                                         />
                                     ) : (
                                         <div className="card-placeholder"></div>
@@ -502,7 +526,11 @@ export function GameBoard() {
                 {/* Tableau */}
                 <div className={`tableau ${deckCount === 2 ? 'two-deck' : ''}`}>
                     {gameState.tableau.map((column, columnIndex) => (
-                        <div key={columnIndex} className="tableau-column">
+                        <div
+                            key={columnIndex}
+                            className="tableau-column"
+                            ref={(el) => { tableauRefs.current[columnIndex] = el; }}
+                        >
                             <div
                                 className="column-drop-zone"
                                 onDragOver={handleDragOver}
@@ -529,6 +557,7 @@ export function GameBoard() {
                                             onDragStart={(e) => handleDragStartWithClear(e, 'tableau', columnIndex, cardIndex)}
                                             onDrag={handleDrag}
                                             onDragEnd={handleDragEnd}
+                                            cardRef={createCardRef(card.id)}
                                         />
                                     ))
                                 )}
@@ -606,7 +635,7 @@ export function GameBoard() {
                                     height: 'var(--card-height, 140px)',
                                 }}
                             >
-                                <Card card={card} />
+                                <Card card={card} cardRef={createCardRef(card.id)} />
                             </div>
                         ))}
                     </div>
