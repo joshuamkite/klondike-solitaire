@@ -319,10 +319,13 @@ input:checked+.slider:hover {
 
 /* Footer */
 .game-footer {
-    max-width: var(--max-game-width, 80%);
-    margin: 20px auto 0;
-    padding: 20px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 15px 20px;
     text-align: center;
+    z-index: 100;
 }
 
 .footer-buttons {
@@ -412,9 +415,7 @@ input:checked+.slider:hover {
     }
 
     .game-footer {
-        margin-top: 30px;
-        padding: 15px;
-        max-width: 100%;
+        padding: 12px 15px;
     }
 
     .footer-buttons {
@@ -504,8 +505,7 @@ input:checked+.slider:hover {
     }
 
     .game-footer {
-        margin-top: 20px;
-        padding: 10px;
+        padding: 8px 10px;
     }
 
     .footer-button {
@@ -585,8 +585,7 @@ input:checked+.slider:hover {
     }
 
     .game-footer {
-        max-width: 100%;
-        margin-top: 20px;
+        padding: 10px 12px;
     }
 
     /* Single-deck: fit 7 columns */
