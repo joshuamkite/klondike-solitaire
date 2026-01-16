@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import type { Card as CardType } from '../types/card';
 import type { GameState } from '../types/gameState';
 import { moveCards, findFoundationForCard } from '../game/klondikeLogic';
@@ -27,22 +27,33 @@ export function useDragAndDrop(
 ) {
     const [draggedCard, setDraggedCard] = useState<DragState | null>(null);
     const [dragOverlay, setDragOverlay] = useState<DragOverlayState | null>(null);
+    const overlayRef = useRef<HTMLDivElement | null>(null);
 
-    // Fail-safe: Clear drag overlay on any mouseup event globally
+    // Track drag position globally and clear on end
     useEffect(() => {
-        const handleGlobalMouseUp = () => {
-            if (dragOverlay) {
-                setDragOverlay(null);
-                setDraggedCard(null);
+        if (!dragOverlay) return;
+
+        const handleGlobalDrag = (e: DragEvent) => {
+            // Update overlay position directly via ref for smooth performance
+            if (overlayRef.current && e.clientX !== INVALID_DRAG_COORDINATE && e.clientY !== INVALID_DRAG_COORDINATE) {
+                overlayRef.current.style.left = `${e.clientX}px`;
+                overlayRef.current.style.top = `${e.clientY}px`;
             }
         };
 
-        document.addEventListener('mouseup', handleGlobalMouseUp);
-        document.addEventListener('dragend', handleGlobalMouseUp);
+        const handleGlobalEnd = () => {
+            setDragOverlay(null);
+            setDraggedCard(null);
+        };
+
+        document.addEventListener('drag', handleGlobalDrag);
+        document.addEventListener('dragend', handleGlobalEnd);
+        document.addEventListener('mouseup', handleGlobalEnd);
 
         return () => {
-            document.removeEventListener('mouseup', handleGlobalMouseUp);
-            document.removeEventListener('dragend', handleGlobalMouseUp);
+            document.removeEventListener('drag', handleGlobalDrag);
+            document.removeEventListener('dragend', handleGlobalEnd);
+            document.removeEventListener('mouseup', handleGlobalEnd);
         };
     }, [dragOverlay]);
 
@@ -55,36 +66,35 @@ export function useDragAndDrop(
         setDraggedCard({ fromPile, fromIndex, cardIndex });
         e.dataTransfer.effectAllowed = 'move';
 
-        // For multi-card sequences, set up custom drag overlay
+        // Get the cards being dragged
+        let cardsBeingDragged: CardType[];
         if (fromPile === 'tableau') {
             const column = gameState.tableau[fromIndex];
-            const cardsBeingDragged = column.slice(cardIndex);
-
-            if (cardsBeingDragged.length > SEQUENTIAL_RANK_DIFFERENCE) {
-                // Use a transparent 1x1 pixel as the drag image to hide browser's default
-                const transparentImg = new Image();
-                transparentImg.src = TRANSPARENT_PIXEL_DATA_URI;
-                e.dataTransfer.setDragImage(transparentImg, INITIAL_MOVE_COUNT, INITIAL_MOVE_COUNT);
-
-                // Set up our custom overlay
-                setDragOverlay({
-                    cards: cardsBeingDragged,
-                    x: e.clientX,
-                    y: e.clientY
-                });
-            }
+            cardsBeingDragged = column.slice(cardIndex);
+        } else if (fromPile === 'waste') {
+            cardsBeingDragged = [gameState.waste[gameState.waste.length - SEQUENTIAL_RANK_DIFFERENCE]];
+        } else {
+            // Foundation
+            const foundation = gameState.foundations[fromIndex];
+            cardsBeingDragged = [foundation[foundation.length - SEQUENTIAL_RANK_DIFFERENCE]];
         }
+
+        // Use custom drag overlay for all drags (more reliable than browser native)
+        const transparentImg = new Image();
+        transparentImg.src = TRANSPARENT_PIXEL_DATA_URI;
+        e.dataTransfer.setDragImage(transparentImg, INITIAL_MOVE_COUNT, INITIAL_MOVE_COUNT);
+
+        setDragOverlay({
+            cards: cardsBeingDragged,
+            x: e.clientX,
+            y: e.clientY
+        });
     };
 
-    const handleDrag = (e: React.DragEvent) => {
-        // Update overlay position if it exists and we have valid coordinates
-        // Note: browsers may send 0,0 on the final drag event before dragend
-        if (dragOverlay) {
-            if (e.clientX !== INVALID_DRAG_COORDINATE || e.clientY !== INVALID_DRAG_COORDINATE) {
-                setDragOverlay(prev => prev ? { ...prev, x: e.clientX, y: e.clientY } : null);
-            }
-        }
-    };
+    // handleDrag is now handled by the global drag listener in useEffect
+    const handleDrag = useCallback(() => {
+        // Position updates handled by document-level drag listener for better coverage
+    }, []);
 
     const handleDragEnd = () => {
         // Always clear both dragged card and overlay states
@@ -178,6 +188,7 @@ export function useDragAndDrop(
     return {
         draggedCard,
         dragOverlay,
+        overlayRef,
         handleDragStart,
         handleDrag,
         handleDragEnd,
