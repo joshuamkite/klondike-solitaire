@@ -3,16 +3,16 @@
  */
 
 /** Duration for card movement animations in milliseconds */
-export const CARD_ANIMATION_DURATION_MS = 300;
+export const CARD_ANIMATION_DURATION_MS = 200;
 
 /** Delay between auto-play card moves in milliseconds */
-export const AUTO_PLAY_DELAY_MS = 700;
+export const AUTO_PLAY_DELAY_MS = 500;
 
 /** Delay for auto-complete actions in milliseconds */
-export const AUTO_COMPLETE_DELAY_MS = 300;
+export const AUTO_COMPLETE_DELAY_MS = 200;
 
-/** Easing function for smooth card animations */
-export const ANIMATION_EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
+/** Easing function for smooth card animations (ease-out for snappy feel) */
+export const ANIMATION_EASING = 'ease-out';
 
 /** Z-index for animated cards flying across screen */
 export const ANIMATED_CARD_Z_INDEX = 1000;
