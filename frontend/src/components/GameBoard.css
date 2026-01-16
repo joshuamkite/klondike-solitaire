@@ -326,6 +326,7 @@ input:checked+.slider:hover {
     padding: 15px 20px;
     text-align: center;
     z-index: 100;
+    pointer-events: none;
 }
 
 .footer-buttons {
@@ -348,6 +349,7 @@ input:checked+.slider:hover {
     text-decoration: none;
     display: inline-block;
     font-family: inherit;
+    pointer-events: auto;
 }
 
 .footer-button:hover {
