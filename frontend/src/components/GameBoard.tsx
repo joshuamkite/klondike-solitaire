@@ -37,6 +37,8 @@ export function GameBoard() {
     const [deckCount, setDeckCount] = useState<1 | 2>(DECK_ONE);
     const [drawCount, setDrawCount] = useState<1 | 3>(DECK_ONE);
     const [showLicense, setShowLicense] = useState(false);
+    const [showHelp, setShowHelp] = useState(false);
+    const [showMoreHelp, setShowMoreHelp] = useState(false);
     const gameBoardRef = useRef<HTMLDivElement>(null);
     const gameAreaRef = useRef<HTMLDivElement>(null);
 
@@ -573,6 +575,12 @@ export function GameBoard() {
 
             <footer className="game-footer">
                 <div className="footer-buttons">
+                    <button
+                        onClick={() => setShowHelp(true)}
+                        className="footer-button"
+                    >
+                        How to Play
+                    </button>
                     <a
                         href="https://www.joshuakite.co.uk/"
                         target="_blank"
@@ -600,6 +608,71 @@ export function GameBoard() {
 
             {showLicense && (
                 <LicenseModal onClose={() => setShowLicense(false)} />
+            )}
+
+            {/* How to Play Modal */}
+            {showHelp && (
+                <div className="help-overlay">
+                    <div className="help-modal">
+                        <button className="help-close" onClick={() => setShowHelp(false)}>× Close</button>
+                        <h2>How to Play</h2>
+
+                        <div className="help-content">
+                            <section className="help-section">
+                                <p>Move all cards to the four foundation piles, building each suit from Ace to King.</p>
+                                <p><strong>Tableau:</strong> Build down in alternating colors (red on black, black on red).</p>
+                                <p><strong>Stock:</strong> Click to draw cards. Click an empty stock to recycle the waste pile.</p>
+
+                                <button
+                                    className="expand-help-button"
+                                    onClick={() => setShowMoreHelp(!showMoreHelp)}
+                                >
+                                    {showMoreHelp ? '▼ Hide Details' : '▶ Show Details'}
+                                </button>
+
+                                {showMoreHelp && (
+                                    <div className="help-details">
+                                        <h3>Objective</h3>
+                                        <p>Build all four foundation piles from Ace to King, one for each suit (Hearts, Diamonds, Clubs, Spades).</p>
+
+                                        <h3>Tableau Rules</h3>
+                                        <ul>
+                                            <li>Build down in alternating colors</li>
+                                            <li>Move sequences of face-up cards together</li>
+                                            <li>Only Kings can be placed on empty columns</li>
+                                            <li>Double-click a card to auto-move it to a foundation</li>
+                                        </ul>
+
+                                        <h3>Foundation Rules</h3>
+                                        <ul>
+                                            <li>Build up by suit from Ace to King</li>
+                                            <li>Cards are automatically moved when safe</li>
+                                        </ul>
+
+                                        <h3>Game Options</h3>
+                                        <ul>
+                                            <li><strong>1 Deck:</strong> Classic 52-card game with 7 tableau columns</li>
+                                            <li><strong>2 Decks:</strong> Double deck (104 cards) with 9 columns and 8 foundations</li>
+                                            <li><strong>Draw 1:</strong> Draw one card at a time (easier)</li>
+                                            <li><strong>Draw 3:</strong> Draw three cards at a time (harder)</li>
+                                        </ul>
+
+                                        <h3>Tips</h3>
+                                        <ul>
+                                            <li>Reveal face-down cards as quickly as possible</li>
+                                            <li>Don't empty a tableau column unless you have a King to place</li>
+                                            <li>Use Undo to try different strategies</li>
+                                        </ul>
+                                    </div>
+                                )}
+                            </section>
+                        </div>
+
+                        <button className="btn-help-close" onClick={() => setShowHelp(false)}>
+                            Got it!
+                        </button>
+                    </div>
+                </div>
             )}
 
             {animatingCards && (

@@ -2,8 +2,8 @@
  * Layout, sizing, and positioning constants
  */
 
-/** Percentage of viewport width for game area on desktop (0.65 = 65%) */
-export const GAME_WIDTH_PERCENT = 0.65;
+/** Percentage of viewport width for game area on desktop (0.90 = 90%) */
+export const GAME_WIDTH_PERCENT = 0.90;
 
 /** Viewport width breakpoint for mobile/desktop detection (pixels) */
 export const MOBILE_BREAKPOINT_PX = 768;
