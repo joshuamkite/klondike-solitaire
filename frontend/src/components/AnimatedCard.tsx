@@ -32,19 +32,21 @@ export function AnimatedCard({
     const [isAnimating, setIsAnimating] = useState(false);
 
     useEffect(() => {
-        // Trigger animation in next frame to ensure CSS transition works
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setIsAnimating(true);
-            });
-        });
+        // Use a minimal delay to ensure the element is rendered before animating
+        // This is faster than double RAF on mobile
+        const startTimer = setTimeout(() => {
+            setIsAnimating(true);
+        }, 10);
 
         // Complete animation after duration
-        const timer = setTimeout(() => {
+        const completeTimer = setTimeout(() => {
             onComplete();
-        }, duration);
+        }, duration + 10);
 
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(startTimer);
+            clearTimeout(completeTimer);
+        };
     }, [duration, onComplete]);
 
     const transform = isAnimating

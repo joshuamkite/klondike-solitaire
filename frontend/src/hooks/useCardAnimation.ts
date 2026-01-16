@@ -2,10 +2,7 @@ import { useState } from 'react';
 import type { Card as CardType } from '../types/card';
 import type { GameState } from '../types/gameState';
 import { moveCards } from '../game/klondikeLogic';
-import {
-    CARD_DEFAULT_HEIGHT_PX,
-    TABLEAU_CARD_VISIBLE_RATIO,
-} from '../constants';
+import { TABLEAU_CARD_VISIBLE_RATIO } from '../constants';
 
 interface AnimatingCardsState {
     cards: CardType[];
@@ -36,9 +33,11 @@ export function useCardAnimation(
     };
 
     // Helper to get the destination element position using refs (uses current DOM state, not future state)
+    // Accepts pre-computed cardHeight to avoid repeated getComputedStyle calls
     const getDestinationPosition = (
         toPile: 'tableau' | 'foundation',
-        toIndex: number
+        toIndex: number,
+        cardHeight: number
     ): { x: number; y: number } | null => {
         if (toPile === 'foundation') {
             // Find the foundation cell using ref
@@ -64,7 +63,6 @@ export function useCardAnimation(
                     const rect = lastCardElement.getBoundingClientRect();
 
                     // Calculate the position for the new card (below the last one)
-                    const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || `${CARD_DEFAULT_HEIGHT_PX}`);
                     return {
                         x: rect.left,
                         y: rect.top + cardHeight * TABLEAU_CARD_VISIBLE_RATIO // 75% overlap means 25% visible
@@ -108,9 +106,12 @@ export function useCardAnimation(
             firstCardId = cardsToMove[0].id;
         }
 
-        // Get start position
+        // Batch all DOM reads together to avoid layout thrashing
         const startPos = getCardPosition(firstCardId);
-        if (!startPos) {
+        const cardHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--card-height') || '140');
+        const endPos = getDestinationPosition(toPile, toIndex, cardHeight);
+
+        if (!startPos || !endPos) {
             // Can't animate - just do the move immediately
             const newState = moveCards(gameState, fromPile, fromIndex, cardIndex, toPile, toIndex);
             if (newState) {
@@ -125,15 +126,6 @@ export function useCardAnimation(
         if (!newState) {
             onAnimationComplete?.();
             return; // Invalid move
-        }
-
-        // Get end position based on current DOM state
-        const endPos = getDestinationPosition(toPile, toIndex);
-        if (!endPos) {
-            // Can't get end position - just update immediately
-            updateGameStateImmediate(newState);
-            onAnimationComplete?.();
-            return;
         }
 
         // Start the animation
