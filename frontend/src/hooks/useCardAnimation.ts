@@ -113,7 +113,7 @@ export function useCardAnimation(
 
         if (!startPos || !endPos) {
             // Can't animate - just do the move immediately
-            const newState = moveCards(gameState, fromPile, fromIndex, cardIndex, toPile, toIndex);
+            const newState = moveCards(stateToUse, fromPile, fromIndex, cardIndex, toPile, toIndex);
             if (newState) {
                 updateGameStateImmediate(newState);
             }
