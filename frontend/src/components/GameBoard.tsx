@@ -138,6 +138,7 @@ export function GameBoard() {
     // Drag and drop hook
     const {
         dragOverlay,
+        overlayRef,
         handleDragStart,
         handleDrag,
         handleDragEnd,
@@ -684,9 +685,10 @@ export function GameBoard() {
                 />
             )}
 
-            {/* Custom drag overlay for multi-card sequences */}
+            {/* Custom drag overlay for card dragging */}
             {dragOverlay && (
                 <div
+                    ref={overlayRef}
                     style={{
                         position: 'fixed',
                         left: dragOverlay.x,
