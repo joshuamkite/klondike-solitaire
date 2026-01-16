@@ -450,12 +450,13 @@ export function getNextAutoCompleteAction(state: GameState): {
         return { action: 'done' };
     }
 
+    // During autocomplete (all cards face-up), skip safety checks - move any valid card
     // Try to move a card to foundation first (prioritize waste, then tableau)
     if (state.waste.length > 0) {
         const card = state.waste[state.waste.length - 1];
         const foundationIndex = findFoundationForCard(card, state.foundations);
 
-        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+        if (foundationIndex !== null) {
             const newState = moveCards(state, 'waste', 0, state.waste.length - 1, 'foundation', foundationIndex);
             if (newState) {
                 return {
@@ -481,7 +482,7 @@ export function getNextAutoCompleteAction(state: GameState): {
         const card = column[column.length - 1];
         const foundationIndex = findFoundationForCard(card, state.foundations);
 
-        if (foundationIndex !== null && isSafeToAutoMove(card, state.foundations)) {
+        if (foundationIndex !== null) {
             const newState = moveCards(state, 'tableau', columnIndex, column.length - 1, 'foundation', foundationIndex);
             if (newState) {
                 return {

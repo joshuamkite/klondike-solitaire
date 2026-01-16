@@ -284,8 +284,8 @@ input:checked+.slider:hover {
 .foundation {
     position: relative;
     /* Expand the drop zone to make drops easier */
-    padding: calc(var(--card-height, 140px) * 0.3);
-    margin: calc(var(--card-height, 140px) * -0.3);
+    padding: calc(var(--card-height, 140px) * 0.5);
+    margin: calc(var(--card-height, 140px) * -0.5);
 }
 
 .tableau {
@@ -313,8 +313,8 @@ input:checked+.slider:hover {
     flex-direction: column;
     align-items: center;
     /* Expand the drop zone with padding to make drops easier */
-    padding: calc(var(--card-height, 140px) * 0.4) 0;
-    margin: calc(var(--card-height, 140px) * -0.4) 0;
+    padding: calc(var(--card-height, 140px) * 0.6) calc(var(--card-width, 100px) * 0.3);
+    margin: calc(var(--card-height, 140px) * -0.6) calc(var(--card-width, 100px) * -0.3);
 }
 
 /* Footer */
