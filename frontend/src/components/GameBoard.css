@@ -624,15 +624,6 @@ input:checked+.slider:hover {
     position: relative;
 }
 
-.help-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 2rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
 .help-modal h2 {
     margin: 0 0 2rem 0;
     color: white;
