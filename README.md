@@ -9,6 +9,7 @@ A React TypeScript implementation of the classic Klondike solitaire card game, d
 ![OpenTofu](https://img.shields.io/badge/OpenTofu-1.10+-FFDA18?style=flat&logo=opentofu&logoColor=000000)
 
 - [Klondike Solitaire](#klondike-solitaire)
+  - [Screenshots](#screenshots)
   - [Features](#features)
   - [Technology Stack](#technology-stack)
   - [Project Structure](#project-structure)
@@ -32,6 +33,10 @@ A React TypeScript implementation of the classic Klondike solitaire card game, d
   - [Inputs](#inputs)
   - [Outputs](#outputs)
 
+
+## Screenshots
+
+![Klondike Solitaire](screenshots/klondike-solitaire.jpg)
 
 ## Features
 
