@@ -4,8 +4,10 @@
 This is a TypeScript React implementation of the classic Klondike solitaire card game. The game runs entirely client-side in the browser.
 
 ## Technology Stack
-- **Framework**: React 18 with TypeScript
+- **Framework**: React 19 with TypeScript
 - **Build Tool**: Vite
+- **Lint/Format**: Biome (`biome.json`)
+- **Testing**: Vitest
 - **Package Manager**: Bun
 
 ## Project Structure
@@ -52,6 +54,9 @@ This is a TypeScript React implementation of the classic Klondike solitaire card
 - `bun dev` - Start development server (http://localhost:5173)
 - `bun build` - Build for production
 - `bun preview` - Preview production build
+- `bun run lint` - Lint with Biome
+- `bun run format` - Format with Biome
+- `bun run test` - Run Vitest tests (`src/game/klondikeLogic.test.ts`)
 
 ## Card Image Setup
 Card images are downloaded from Wikimedia Commons using the Go script:

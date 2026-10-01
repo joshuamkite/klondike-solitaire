@@ -2,10 +2,11 @@
 
 A React TypeScript implementation of the classic Klondike solitaire card game, deployed as a static website on AWS.
 
-![React](https://img.shields.io/badge/React-19.2-61DAFB?style=flat&logo=react)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat&logo=typescript)
-![Bun](https://img.shields.io/badge/Bun-1.1.26-000000?style=flat&logo=bun)
-![Vite](https://img.shields.io/badge/Vite-7.2-646CFF?style=flat&logo=vite)
+![React](https://img.shields.io/badge/React-19-61DAFB?style=flat&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-7-3178C6?style=flat&logo=typescript&logoColor=white)
+![Bun](https://img.shields.io/badge/Bun-1.4-000000?style=flat&logo=bun&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-8-646CFF?style=flat&logo=vite&logoColor=white)
+![Biome](https://img.shields.io/badge/Biome-2-60A5FA?style=flat&logo=biome&logoColor=white)
 ![OpenTofu](https://img.shields.io/badge/OpenTofu-1.10+-FFDA18?style=flat&logo=opentofu&logoColor=000000)
 
 - [Klondike Solitaire](#klondike-solitaire)
@@ -58,9 +59,11 @@ A React TypeScript implementation of the classic Klondike solitaire card game, d
 
 ## Technology Stack
 
-- **Frontend**: React 18 with TypeScript
+- **Frontend**: React 19 with TypeScript
 - **Build Tool**: Vite
 - **Package Manager**: Bun
+- **Linting/Formatting**: Biome
+- **Testing**: Vitest
 - **Deployment**: AWS S3 + CloudFront (via Terraform/OpenTofu)
 
 ## Project Structure
@@ -102,6 +105,13 @@ bun dev
 ```
 
 The game will be available at http://localhost:5173
+
+4. Lint, format and test (from `frontend`):
+```bash
+bun run lint     # biome lint
+bun run format   # biome format --write
+bun run test     # vitest
+```
 
 ## AWS Deployment
 
@@ -199,13 +209,13 @@ The download script in [`dev_tooling/download_cards`](dev_tooling/download_cards
 | Name | Version |
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.10.0 |
-| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.26.0 |
+| <a name="requirement_aws"></a> [aws](#requirement\_aws) | >=6.66.0 |
 
 ## Providers
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.27.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.67.0 |
 | <a name="provider_null"></a> [null](#provider\_null) | 3.2.4 |
 
 ## Modules
